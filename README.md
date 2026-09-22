@@ -1,3 +1,3 @@
 ## Play: [https://unioncyclist.github.io/2048undo/](unioncyclist.github.io/2048undo)
 
-Inspired by the original 2048 by Gabriele Cirulli
+Inspired by the original 2048 by Gabriele Cirulli. https://github.com/gabrielecirulli/2048
