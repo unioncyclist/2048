@@ -46,7 +46,7 @@ if (-not $chrome) {
     $start = $html.IndexOf('<pre id="log">')
     $end = $html.IndexOf('</pre>')
     if ($start -ge 0 -and $end -gt $start) {
-      $log = $html.Substring($start + 15, $end - $start - 15)
+      $log = $html.Substring($start + 14, $end - $start - 14)
     }
   }
 
@@ -55,6 +55,50 @@ if (-not $chrome) {
     if ($log -notmatch '(?m)0 failed') { $failed = $true }
   } else {
     Write-Host "Could not read the results out of the dumped DOM." -ForegroundColor Red
+    if (Test-Path $err) { Get-Content $err | Select-Object -First 5 | ForEach-Object { Write-Host "  $_" } }
+    $failed = $true
+  }
+
+  Remove-Item -LiteralPath $profile -Recurse -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $dom, $err -Force -ErrorAction SilentlyContinue
+}
+
+
+Write-Host ""
+Write-Host "== mobile size confirmation (headless Chrome) ==" -ForegroundColor Cyan
+
+if (-not $chrome) {
+  Write-Host "No Chrome or Edge found; skipping the mobile confirmation suite." -ForegroundColor Yellow
+} else {
+  $page = "file:///" + ((Join-Path $root "tests/mobile_browser_check.html") -replace '\\', '/')
+  $tmp = [IO.Path]::GetTempPath()
+  $profile = Join-Path $tmp ("2048undo-mobile-profile-" + [guid]::NewGuid().ToString("N"))
+  $dom = Join-Path $tmp ("2048undo-mobile-dom-" + [guid]::NewGuid().ToString("N") + ".html")
+  $err = "$dom.err"
+
+  $proc = Start-Process -FilePath $chrome -PassThru -WindowStyle Hidden `
+    -RedirectStandardOutput $dom -RedirectStandardError $err -ArgumentList @(
+      "--headless=new", "--no-sandbox", "--disable-gpu", "--window-size=320,900",
+      "--user-data-dir=$profile", "--virtual-time-budget=15000",
+      "--dump-dom", $page
+    )
+  $proc.WaitForExit()
+
+  $log = $null
+  if (Test-Path $dom) {
+    $html = Get-Content -Raw $dom
+    $start = $html.IndexOf('<pre id="log">')
+    $end = $html.IndexOf('</pre>')
+    if ($start -ge 0 -and $end -gt $start) {
+      $log = $html.Substring($start + 14, $end - $start - 14)
+    }
+  }
+
+  if ($log) {
+    Write-Host $log
+    if ($log -notmatch '(?m)0 failed') { $failed = $true }
+  } else {
+    Write-Host "Could not read the mobile results out of the dumped DOM." -ForegroundColor Red
     if (Test-Path $err) { Get-Content $err | Select-Object -First 5 | ForEach-Object { Write-Host "  $_" } }
     $failed = $true
   }

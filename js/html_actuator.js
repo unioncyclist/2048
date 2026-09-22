@@ -17,8 +17,9 @@ function HTMLActuator() {
   this.gridContainer    = document.querySelector(".grid-container");
   this.scoreContainer   = document.querySelector(".score-container");
   this.bestContainer    = document.querySelector(".best-container");
-  this.messageContainer = document.querySelector(".game-message");
-  this.boardContainer   = document.querySelector(".game-container");
+  this.messageContainer    = document.querySelector(".game-message");
+  this.sizeChangeContainer = document.querySelector(".size-change-message");
+  this.boardContainer      = document.querySelector(".game-container");
 
   // The score currently on screen, so we can flash the difference.
   this.score = 0;
@@ -87,6 +88,7 @@ HTMLActuator.prototype.resizeBoard = function (size) {
 // Dismiss the win/lose overlay (used by restart, undo and keep playing).
 HTMLActuator.prototype.continueGame = function () {
   this.clearMessage();
+  this.clearSizeChangeMessage();
 };
 
 HTMLActuator.prototype.updateBoardSizeLock = function (locked) {
@@ -109,8 +111,9 @@ HTMLActuator.prototype.showSizeChangeConfirmation = function (size, currentSize)
   if (readout) readout.textContent = currentSize + "\u00d7" + currentSize;
 
   this.clearMessage();
-  this.messageContainer.classList.add("game-size-change");
-  this.messageContainer.getElementsByTagName("p")[0].textContent =
+  this.clearSizeChangeMessage();
+  this.sizeChangeContainer.classList.add("game-size-change");
+  this.sizeChangeContainer.getElementsByTagName("p")[0].textContent =
     "Changing the board size will reset your current game.";
 };
 
@@ -120,7 +123,7 @@ HTMLActuator.prototype.cancelSizeChange = function (size, terminated, over, won)
   var readout = document.querySelector(".board-size-value");
   if (readout) readout.textContent = size + "\u00d7" + size;
 
-  this.clearMessage();
+  this.clearSizeChangeMessage();
   if (terminated) this.message(won && !over);
 };
 
@@ -219,5 +222,8 @@ HTMLActuator.prototype.clearMessage = function () {
   // One at a time: older IE only accepts a single value here.
   this.messageContainer.classList.remove("game-won");
   this.messageContainer.classList.remove("game-over");
-  this.messageContainer.classList.remove("game-size-change");
+};
+
+HTMLActuator.prototype.clearSizeChangeMessage = function () {
+  this.sizeChangeContainer.classList.remove("game-size-change");
 };

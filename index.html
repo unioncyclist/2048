@@ -31,44 +31,51 @@
   </button>
 
   <div class="container">
-    <div class="above-game">
-
-      <a class="restart-button">New Game [r]</a>
-      <a class="restart-button undo-button disabled">Undo [u]</a>
-    </div>
-
-    <div class="heading">
-      <h1 class="title">2048</h1>
-      <div class="scores-container">
-        <div class="score-container">0</div>
-        <div class="best-container">0</div>
+    <div class="game-area">
+      <div class="above-game">
+        <a class="restart-button">New Game [r]</a>
+        <a class="restart-button undo-button disabled">Undo [u]</a>
       </div>
-    </div>
 
-    <div class="board-size">
-      <label for="board-size-slider">Board size</label>
-      <input type="range" id="board-size-slider" class="board-size-slider"
-             min="3" max="8" step="1" value="4"
-             aria-label="Board size, from 3 by 3 to 8 by 8">
-      <span class="board-size-lock" role="img" aria-label="Board size unlocked"></span>
-      <span class="board-size-value">4&#215;4</span>
-    </div>
+      <div class="heading">
+        <h1 class="title">2048</h1>
+        <div class="scores-container">
+          <div class="score-container">0</div>
+          <div class="best-container">0</div>
+        </div>
+      </div>
 
-    <div class="game-container">
-      <div class="game-message">
+      <div class="board-size">
+        <label for="board-size-slider">Board size</label>
+        <input type="range" id="board-size-slider" class="board-size-slider"
+               min="3" max="8" step="1" value="4"
+               aria-label="Board size, from 3 by 3 to 8 by 8">
+        <span class="board-size-lock" role="img" aria-label="Board size unlocked"></span>
+        <span class="board-size-value">4&#215;4</span>
+      </div>
+
+      <div class="game-container">
+        <div class="game-message">
+          <p></p>
+          <div class="lower">
+            <a class="keep-playing-button">Keep going</a>
+            <a class="retry-button">Try again</a>
+          </div>
+        </div>
+
+        <!-- Filled in by the actuator, which knows how many cells there are. -->
+        <div class="grid-container"></div>
+
+        <div class="tile-container"></div>
+      </div>
+
+      <div class="size-change-message">
         <p></p>
         <div class="lower">
-          <a class="keep-playing-button">Keep going</a>
-          <a class="retry-button">Try again</a>
           <a class="size-change-confirm-button">OK</a>
           <a class="size-change-cancel-button">Cancel</a>
         </div>
       </div>
-
-      <!-- Filled in by the actuator, which knows how many cells there are. -->
-      <div class="grid-container"></div>
-
-      <div class="tile-container"></div>
     </div>
 
     <p class="game-explanation">

@@ -89,6 +89,9 @@ hr {
   --tile-shadow: #000000;
   --overlay-bg: rgba(238, 228, 218, 0.5);
   --overlay-won-bg: rgba(237, 194, 46, 0.5);
+  --size-change-bg: rgba(250, 248, 239, 0.7);
+  --size-change-ink: #5f554b;
+  --size-change-rule: #d8d4d0;
   --toggle-shadow: rgba(29, 52, 91, 0.18);
   --gain-ink: rgba(119, 110, 101, 0.9);
   --focus-ring: rgba(143, 122, 102, 0.4);
@@ -111,6 +114,9 @@ hr {
   --tile-shadow: rgba(0, 0, 0, 0.55);
   --overlay-bg: rgba(12, 19, 34, 0.78);
   --overlay-won-bg: rgba(29, 95, 209, 0.6);
+  --size-change-bg: rgba(12, 19, 34, 0.7);
+  --size-change-ink: #eaf2ff;
+  --size-change-rule: #2a3a55;
   --toggle-shadow: rgba(0, 0, 0, 0.45);
   --gain-ink: #eaf2ff;
   --focus-ring: rgba(110, 168, 255, 0.45);
@@ -506,9 +512,7 @@ h1.title {
   margin-left: 9px;
 }
 
-.game-container .game-message a.keep-playing-button,
-.game-container .game-message a.size-change-confirm-button,
-.game-container .game-message a.size-change-cancel-button { display: none; }
+.game-container .game-message a.keep-playing-button { display: none; }
 
 .game-container .game-message.game-won {
   background: var(--overlay-won-bg);
@@ -516,25 +520,65 @@ h1.title {
 }
 .game-container .game-message.game-won a.keep-playing-button { display: inline-block; }
 
-.game-container .game-message.game-size-change {
-  display: block;
-  color: var(--button-ink);
-}
-
-.game-container .game-message.game-size-change p {
-  height: auto;
-  margin: 185px 30px 0;
-  font-size: 32px;
-  line-height: 40px;
-}
-
-.game-container .game-message.game-size-change .lower { margin-top: 35px; }
-.game-container .game-message.game-size-change a.retry-button { display: none; }
-.game-container .game-message.game-size-change a.size-change-confirm-button,
-.game-container .game-message.game-size-change a.size-change-cancel-button { display: inline-block; }
-
 .game-container .game-message.game-won,
 .game-container .game-message.game-over { display: block; }
+
+.game-area { position: relative; }
+
+.size-change-message {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 101;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  background: var(--size-change-bg);
+  color: var(--size-change-ink);
+  text-align: center;
+  -webkit-animation: fade-in 300ms ease;
+  -moz-animation: fade-in 300ms ease;
+  animation: fade-in 300ms ease;
+  -webkit-animation-fill-mode: both;
+  -moz-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+.size-change-message.game-size-change { display: flex; }
+
+.size-change-message p {
+  max-width: 380px;
+  margin: 0;
+  font-size: 32px;
+  font-weight: bold;
+  line-height: 1.25;
+}
+
+.size-change-message .lower {
+  position: absolute;
+  right: 30px;
+  bottom: 30px;
+  left: 30px;
+}
+
+.size-change-message a {
+  display: inline-block;
+  min-width: 44px;
+  height: 40px;
+  margin: 0 4px;
+  padding: 0 20px;
+  border: 1px solid var(--size-change-rule);
+  border-radius: 3px;
+  background: var(--button-bg);
+  color: var(--button-ink);
+  font-weight: bold;
+  line-height: 40px;
+  text-decoration: none;
+}
 
 /* ------------------------------------------------------------------
    Buttons
@@ -733,18 +777,27 @@ h1.title {
   .board-size-slider { width: 90px; margin: 0 6px; }
 
   .game-container .game-message p {
-    font-size: 60px;
-    height: 60px;
-    line-height: 60px;
-    margin-top: 222px;
+    font-size: 30px;
+    height: 30px;
+    line-height: 30px;
+    margin-top: 90px;
   }
-  .game-container .game-message .lower { margin-top: 59px; }
+  .game-container .game-message .lower { margin-top: 30px; }
 
-  .game-message p {
-    font-size: 30px !important;
-    height: 30px !important;
-    line-height: 30px !important;
-    margin-top: 90px !important;
+  .size-change-message { padding: 24px 18px; }
+  .size-change-message p {
+    max-width: 250px;
+    font-size: 26px;
+    line-height: 1.2;
   }
-  .game-message .lower { margin-top: 30px !important; }
+  .size-change-message .lower {
+    right: 18px;
+    bottom: 24px;
+    left: 18px;
+  }
+  .size-change-message a {
+    min-width: 76px;
+    height: 42px;
+    line-height: 42px;
+  }
 }

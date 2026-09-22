@@ -52,7 +52,8 @@ and the undo button. Frames are pumped by hand so each one can be inspected.</p>
   </svg>
 </button>
 <div class="container">
-  <a class="restart-button undo-button disabled">u</a>
+  <div class="game-area">
+    <a class="restart-button undo-button disabled">u</a>
   <div class="board-size">
     <label for="board-size-slider">Board size</label>
     <input type="range" id="board-size-slider" class="board-size-slider"
@@ -60,15 +61,17 @@ and the undo button. Frames are pumped by hand so each one can be inspected.</p>
     <span class="board-size-lock" role="img" aria-label="Board size unlocked"></span>
     <span class="board-size-value">4&#215;4</span>
   </div>
-  <div class="game-container">
-    <div class="game-message"><p></p><div class="lower">
-      <a class="keep-playing-button">k</a><a class="retry-button">r</a>
+    <div class="game-container">
+      <div class="game-message"><p></p><div class="lower">
+        <a class="keep-playing-button">k</a><a class="retry-button">r</a></div></div>
+      <div class="grid-container"></div>
+      <div class="tile-container"></div>
+    </div>
+    <div class="size-change-message"><p></p><div class="lower">
       <a class="size-change-confirm-button">OK</a><a class="size-change-cancel-button">Cancel</a></div></div>
-    <div class="grid-container"></div>
-    <div class="tile-container"></div>
+    <div class="score-container">0</div>
+    <div class="best-container">0</div>
   </div>
-  <div class="score-container">0</div>
-  <div class="best-container">0</div>
 </div>
 
 <script src="../js/theme_manager.js"></script>
@@ -83,6 +86,7 @@ and the undo button. Frames are pumped by hand so each one can be inspected.</p>
   var container = document.querySelector(".tile-container");
   var scoreBox = document.querySelector(".score-container");
   var messageBox = document.querySelector(".game-message");
+  var sizeMessageBox = document.querySelector(".size-change-message");
   var undoButton = document.querySelector(".undo-button");
   var game;
 
@@ -348,15 +352,17 @@ and the undo button. Frames are pumped by hand so each one can be inspected.</p>
     dragTo(7);
     eq(game.size, 6, "a locked slider does not reset the game immediately");
     eq(slider().value, "6", "a locked slider snaps back to the current size");
-    eq(hasClass(messageBox, "game-size-change"), true,
-       "a locked size change opens a board overlay");
-    ok(messageBox.getElementsByTagName("p")[0].textContent.indexOf("reset") >= 0,
+    eq(hasClass(sizeMessageBox, "game-size-change"), true,
+       "a locked size change opens a dedicated operation-area overlay");
+    ok(sizeMessageBox.getElementsByTagName("p")[0].textContent.indexOf("reset") >= 0,
        "the overlay warns that changing the size resets the game");
+    eq(hasClass(messageBox, "game-size-change"), false,
+       "the board win/loss overlay is not reused for size confirmation");
 
     document.querySelector(".size-change-cancel-button").click();
     pumpFrame();
     eq(game.size, 6, "Cancel preserves the played board size");
-    eq(hasClass(messageBox, "game-size-change"), false, "Cancel dismisses the reset warning");
+    eq(hasClass(sizeMessageBox, "game-size-change"), false, "Cancel dismisses the reset warning");
 
     // A confirmation temporarily covers a terminal state, but Cancel restores
     // it so changing the board size cannot accidentally dismiss game over.

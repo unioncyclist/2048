@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2048undo mobile size confirmation checks</title>
+<link href="../style/main.css" rel="stylesheet" type="text/css">
+<style>
+  body { font: 13px monospace; }
+  #log { white-space: pre; position: relative; z-index: 200; background: #faf8ef; }
+  .game-container { cursor: default; }
+</style>
+</head>
+<body>
+<pre id="log"></pre>
+
+<script>
+  var frames = [];
+  window.requestAnimationFrame = function (cb) { frames.push(cb); return frames.length; };
+  window.cancelAnimationFrame = function () {};
+  function pumpFrame() {
+    var queued = frames;
+    frames = [];
+    for (var i = 0; i < queued.length; i++) queued[i](i * 16);
+  }
+
+  var out = [], pass = 0, fail = 0;
+  function say(s) { out.push(s); document.getElementById("log").textContent = out.join("\n"); }
+  function ok(cond, label) {
+    if (cond) { pass++; say("  ok   " + label); }
+    else { fail++; say("  FAIL " + label); }
+  }
+  function eq(a, b, label) {
+    ok(a === b, label + (a === b ? "" : "   (got " + JSON.stringify(a) +
+        ", want " + JSON.stringify(b) + ")"));
+  }
+  function inside(inner, outer) {
+    return inner.left >= outer.left - 0.6 && inner.right <= outer.right + 0.6 &&
+           inner.top >= outer.top - 0.6 && inner.bottom <= outer.bottom + 0.6;
+  }
+  function overlaps(a, b) {
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  }
+  function alpha(color) { return parseFloat(color.split(",").pop()); }
+</script>
+
+<button class="theme-toggle" type="button" aria-label="Switch to dark mode">
+  <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+  <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle></svg>
+</button>
+<div class="container">
+  <div class="game-area">
+    <div class="above-game">
+      <a class="restart-button">New Game</a>
+      <a class="restart-button undo-button disabled">Undo</a>
+    </div>
+    <div class="heading">
+      <h1 class="title">2048</h1>
+      <div class="scores-container"><div class="score-container">0</div><div class="best-container">0</div></div>
+    </div>
+    <div class="board-size">
+      <label for="board-size-slider">Board size</label>
+      <input type="range" id="board-size-slider" class="board-size-slider" min="3" max="8" step="1" value="4">
+      <span class="board-size-lock" role="img" aria-label="Board size unlocked"></span>
+      <span class="board-size-value">4&#215;4</span>
+    </div>
+    <div class="game-container">
+      <div class="game-message"><p></p><div class="lower"><a class="keep-playing-button">Keep going</a><a class="retry-button">Try again</a></div></div>
+      <div class="grid-container"></div><div class="tile-container"></div>
+    </div>
+    <div class="size-change-message"><p></p><div class="lower"><a class="size-change-confirm-button">OK</a><a class="size-change-cancel-button">Cancel</a></div></div>
+  </div>
+  <p class="game-explanation">Game instructions remain available outside the confirmation layer.</p>
+</div>
+
+<script src="../js/theme_manager.js"></script>
+<script src="../js/tile.js"></script>
+<script src="../js/grid.js"></script>
+<script src="../js/keyboard_input_manager.js"></script>
+<script src="../js/html_actuator.js"></script>
+<script src="../js/local_storage_manager.js"></script>
+<script src="../js/game_manager.js"></script>
+<script>
+  var game;
+  var sizeMessage = document.querySelector(".size-change-message");
+  var boardMessage = document.querySelector(".game-message");
+  var gameArea = document.querySelector(".game-area");
+  var explanation = document.querySelector(".game-explanation");
+  var root = document.documentElement;
+
+  function hasClass(el, c) { return el.getAttribute("class").split(/\s+/).indexOf(c) >= 0; }
+  function newGame() {
+    localStorage.clear();
+    game = new GameManager(4, KeyboardInputManager, HTMLActuator, LocalStorageManager);
+    game.addRandomTile = function () {};
+    pumpFrame();
+  }
+  function dragTo(n) {
+    var slider = document.querySelector(".board-size-slider");
+    slider.value = String(n);
+    slider.dispatchEvent(new Event("input"));
+    slider.dispatchEvent(new Event("change"));
+    pumpFrame();
+  }
+  function makePlayedMove() {
+    game.grid = new Grid(4);
+    game.grid.insertTile(new Tile({ x: 1, y: 0 }, 2));
+    game.actuate();
+    pumpFrame();
+    game.move(1);
+    pumpFrame(); pumpFrame();
+  }
+  function assertConfirmation(theme) {
+    var overlay = sizeMessage.getBoundingClientRect();
+    var area = gameArea.getBoundingClientRect();
+    var paragraph = sizeMessage.getElementsByTagName("p")[0].getBoundingClientRect();
+    var buttons = sizeMessage.querySelectorAll("a");
+    var confirm = buttons[0].getBoundingClientRect();
+    var cancel = buttons[1].getBoundingClientRect();
+    var overlayStyle = getComputedStyle(sizeMessage);
+
+    ok(hasClass(sizeMessage, "game-size-change"), theme + " mode opens the dedicated size confirmation layer");
+    ok(inside(overlay, area), theme + " mode confirmation layer stays within the game operation area");
+    ok(overlay.bottom <= explanation.getBoundingClientRect().top + 0.6,
+       theme + " mode confirmation layer does not cover the instructions");
+    ok(inside(paragraph, overlay) && inside(confirm, overlay) && inside(cancel, overlay),
+       theme + " mode message and buttons fit entirely inside the overlay");
+    ok(!overlaps(paragraph, confirm) && !overlaps(paragraph, cancel) && !overlaps(confirm, cancel),
+       theme + " mode text and buttons do not overlap");
+    ok(confirm.width >= 44 && confirm.height >= 40 && cancel.width >= 44 && cancel.height >= 40,
+       theme + " mode buttons remain touch-sized");
+    ok(overlayStyle.color !== overlayStyle.backgroundColor,
+       theme + " mode confirmation text differs from its background");
+  }
+
+  try {
+    say("mobile confirmation");
+    newGame();
+    makePlayedMove();
+    dragTo(5);
+    assertConfirmation("light");
+    var lightSizeChangeBackground = getComputedStyle(root).getPropertyValue("--size-change-bg");
+    var lightSizeChangeInk = getComputedStyle(root).getPropertyValue("--size-change-ink");
+    eq(alpha(lightSizeChangeBackground), 0.7, "light mode confirmation is 70% opaque");
+    eq(hasClass(boardMessage, "game-size-change"), false,
+       "the board win/loss overlay is not reused for size confirmation");
+
+    document.querySelector(".size-change-cancel-button").click();
+    pumpFrame();
+    ok(!hasClass(sizeMessage, "game-size-change"), "Cancel dismisses the dedicated confirmation layer");
+
+    dragTo(5);
+    document.querySelector(".theme-toggle").click();
+    assertConfirmation("dark");
+    var darkSizeChangeBackground = getComputedStyle(root).getPropertyValue("--size-change-bg");
+    ok(darkSizeChangeBackground !== lightSizeChangeBackground &&
+       getComputedStyle(root).getPropertyValue("--size-change-ink") !== lightSizeChangeInk,
+       "dark mode uses a distinct confirmation background and text palette");
+    eq(alpha(darkSizeChangeBackground), 0.7, "dark mode confirmation is 70% opaque");
+    ok(getComputedStyle(sizeMessage).backgroundColor !== "rgba(238, 228, 218, 0.5)",
+       "dark mode does not reuse the light transparent board overlay");
+
+    document.querySelector(".size-change-confirm-button").click();
+    pumpFrame();
+    eq(game.size, 5, "OK resets the game at the pending size");
+    ok(!hasClass(sizeMessage, "game-size-change"), "OK dismisses the dedicated confirmation layer");
+
+    say("");
+    say(pass + " passed, " + fail + " failed");
+    say("DONE");
+  } catch (err) {
+    say("ERROR: " + err.message + " | " + err.stack);
+  }
+</script>
+</body>
+</html>
