@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>How to play and win the 2048 game with an undo option</title>
+  <meta name="description" content="How to play 2048 with unlimited undo: the rules, the controls, how the undo history and saved sessions work, and the strategy tips that make winning much easier.">
+  <link href="style/main.css" rel="stylesheet" type="text/css">
+  <link rel="shortcut icon" href="favicon.ico">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui">
+  <script>
+    // Applied before the first paint so reloading in night mode never flashes
+    // a white page. Kept in sync by js/theme_manager.js.
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  </script>
+</head>
+<body>
+  <button class="theme-toggle" type="button" aria-label="Switch to dark mode">
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+    </svg>
+  </button>
+
+  <div class="container">
+    <div class="heading">
+      <h1 class="title">2048</h1>
+    </div>
+
+    <div class="above-game">
+      <p><a href="./index.html">&larr; Back to the game</a></p>
+    </div>
+
+    <div class="game-explanation">
+      <p>
+        <strong class="important">How to play 2048 with UNDO:</strong><br>
+        Use the arrow or WASD keys on the keyboard of your computer or swipe in all four
+        directions within the field on your smartphone. The occupied cells will be
+        rushed to the empty cells in the particular direction. If two cells with the
+        same value touch during the process, they will be merged into a single cell
+        and their value will be summed.
+      </p>
+
+      <p>
+        The goal of the game is to reach a state where the value of one of the cells
+        is 2048. The game is mobile friendly. You can play it on your computer and in
+        the browser of your smartphone.
+      </p>
+
+      <p>
+        It includes an almost unlimited <strong>UNDO</strong>, so that you can win more
+        often. The game saves its state in the browser, so even if you close the
+        browser and reopen it later on the same computer, you will be returned
+        exactly where you left off.
+      </p>
+
+      <p>
+        The Undo steps are kept in the local storage of the browser and it has its
+        limits. The game allows you to play well past reaching 2048. If you reach a
+        few tens of thousands of moves, the local storage quota gets filled up and
+        the game stalls. That is why the undo history is capped at 1000 entries.
+        This should be enough to get you out of trouble without risking a stall.
+      </p>
+
+      <h2>Board size</h2>
+      <p>
+        Drag the <strong>board size</strong> slider on the main page to play on
+        anything from a tight 3&#215;3 to a sprawling 8&#215;8 grid. Changing the size
+        starts a new game.
+      </p>
+
+      <h2>Night mode</h2>
+      <p>
+        The button in the top-right corner switches between the light and dark
+        colour schemes.
+      </p>
+
+      <h2>Tips that make winning much easier</h2>
+      <ol>
+        <li>Keep the cell with the highest value in one of the corners. Personally, I prefer the bottom-right corner. In order to achieve this...</li>
+        <li>... mostly use the RIGHT and DOWN arrows.</li>
+        <li>Try to use the UP arrow only when the right column is full. Otherwise, you risk the field with the highest value escaping the bottom-right corner.</li>
+        <li>Avoid the LEFT arrow. Do not use it unless there is no other move left.</li>
+        <li>Try to keep the right vertical column full.</li>
+      </ol>
+      <br>
+      <a href="./index.html">&larr; Back to the game</a></p>
+
+      <hr>
+      <p align="center">
+        <a href="https://github.com/gabrielecirulli/2048" rel="noopener" target="_blank">Inspired by the original 2048 by Gabriele Cirulli</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="js/theme_manager.js"></script>
+</body>
+</html>

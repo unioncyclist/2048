@@ -1,0 +1,750 @@
+@import url(fonts/clear-sans.css);
+
+/* ------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------ */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px;
+}
+
+body {
+  margin: 80px 0;
+  background: transparent;
+  transition: color 0.25s ease;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 10px;
+  line-height: 1.65;
+}
+
+a {
+  color: var(--ink);
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+strong.important {
+  text-transform: uppercase;
+}
+
+h2 {
+  margin: 30px 0 10px;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+ol, ul {
+  margin-top: 0;
+  margin-bottom: 10px;
+  padding-left: 22px;
+  line-height: 1.65;
+}
+
+ol li, ul li {
+  margin-bottom: 6px;
+}
+
+hr {
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+/* ------------------------------------------------------------------
+   Board geometry
+
+   The board is square and its cell count is adjustable, so no size below is
+   hard-coded: everything is derived from how wide the board is and how much
+   space sits between the cells. `--n` is the cell count and is set by the
+   actuator each time the board is drawn, which is what lets a single set of
+   rules lay out 3x3 through 8x8.
+   ------------------------------------------------------------------ */
+:root {
+  --board-size: 500px;
+  --board-padding: 15px;
+  --tile-gap: 14px;
+
+  /* Every colour on the page comes from here, so night mode is nothing but a
+     second set of values on <html data-theme="dark">. Nothing below hard-codes
+     a colour. */
+  --page-bg: #faf8ef;
+  --ink: #776e65;
+  --rule: #d8d4d0;
+  --board-bg: #8f7a66;
+  --cell-bg: #bbada0;
+  --button-bg: #8f7a66;
+  --button-ink: #f9f6f2;
+  --box-bg: #bbada0;
+  --box-label: #eee4da;
+  --tile-ink: #f9f6f2;
+  --tile-shadow: #000000;
+  --overlay-bg: rgba(238, 228, 218, 0.5);
+  --overlay-won-bg: rgba(237, 194, 46, 0.5);
+  --toggle-shadow: rgba(29, 52, 91, 0.18);
+  --gain-ink: rgba(119, 110, 101, 0.9);
+  --focus-ring: rgba(143, 122, 102, 0.4);
+  color-scheme: light;
+}
+
+/* Night mode. Values follow the dark palette of the portfolio site, so the
+   game and that page read as the same product. */
+:root[data-theme="dark"] {
+  --page-bg: #0c1322;
+  --ink: #e6edf7;
+  --rule: #2a3a55;
+  --board-bg: #151e2e;
+  --cell-bg: #22304a;
+  --button-bg: #26417a;
+  --button-ink: #eaf2ff;
+  --box-bg: #22304a;
+  --box-label: #94a3b8;
+  --tile-ink: #f9f6f2;
+  --tile-shadow: rgba(0, 0, 0, 0.55);
+  --overlay-bg: rgba(12, 19, 34, 0.78);
+  --overlay-won-bg: rgba(29, 95, 209, 0.6);
+  --toggle-shadow: rgba(0, 0, 0, 0.45);
+  --gain-ink: #eaf2ff;
+  --focus-ring: rgba(110, 168, 255, 0.45);
+  color-scheme: dark;
+
+  /* The glow belongs to the root layer so it remains continuous through the
+     body's top and bottom margins. */
+  background:
+    radial-gradient(circle at top left, #1b2c4d 0, transparent 34rem),
+    var(--page-bg);
+}
+
+.container {
+  width: var(--board-size);
+  margin: 0 auto;
+}
+
+/* ------------------------------------------------------------------
+   Heading
+   ------------------------------------------------------------------ */
+.heading:after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+h1.title {
+  font-size: 80px;
+  font-weight: bold;
+  margin: 0;
+  display: block;
+  float: left;
+}
+
+.scores-container {
+  float: right;
+  text-align: right;
+}
+
+.score-container, .best-container {
+  position: relative;
+  display: inline-block;
+  background: var(--box-bg);
+  padding: 15px 25px;
+  font-size: 25px;
+  height: 25px;
+  line-height: 47px;
+  font-weight: bold;
+  border-radius: 3px;
+  color: white;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.score-container:after, .best-container:after {
+  position: absolute;
+  width: 100%;
+  top: 10px;
+  left: 0;
+  text-transform: uppercase;
+  font-size: 13px;
+  line-height: 13px;
+  text-align: center;
+  color: var(--box-label);
+}
+
+.score-container:after { content: "Score"; }
+.best-container:after  { content: "Best"; }
+
+.score-container .score-addition, .best-container .score-addition {
+  position: absolute;
+  right: 30px;
+  font-size: 25px;
+  line-height: 25px;
+  font-weight: bold;
+  color: var(--gain-ink);
+  z-index: 100;
+  -webkit-animation: move-up 600ms ease-in;
+  -moz-animation: move-up 600ms ease-in;
+  animation: move-up 600ms ease-in;
+  -webkit-animation-fill-mode: both;
+  -moz-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+/* Floating "+4" that rises out of the score box */
+@-webkit-keyframes move-up {
+  0%   { top: 25px;  opacity: 1; }
+  100% { top: -50px; opacity: 0; }
+}
+@-moz-keyframes move-up {
+  0%   { top: 25px;  opacity: 1; }
+  100% { top: -50px; opacity: 0; }
+}
+@keyframes move-up {
+  0%   { top: 25px;  opacity: 1; }
+  100% { top: -50px; opacity: 0; }
+}
+
+/* ------------------------------------------------------------------
+   Game board
+   ------------------------------------------------------------------ */
+.game-container {
+  /* Overridden by the actuator whenever the board is redrawn. */
+  --n: 4;
+  --board-inner: calc(var(--board-size) - 2 * var(--board-padding));
+  --tile-size: calc((var(--board-inner) - (var(--n) - 1) * var(--tile-gap)) / var(--n));
+  --tile-pitch: calc(var(--tile-size) + var(--tile-gap));
+
+  margin-top: 40px;
+  position: relative;
+  padding: var(--board-padding);
+  cursor: default;
+  -webkit-touch-callout: none;
+  -ms-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  touch-action: none;
+  background: var(--board-bg);
+  border-radius: 6px;
+  width: var(--board-size);
+  height: var(--board-size);
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* The empty cells behind the tiles. Laid out as a grid so the cell count can
+   change without any per-size rules. */
+.grid-container {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--n), var(--tile-size));
+  grid-auto-rows: var(--tile-size);
+  gap: var(--tile-gap);
+}
+
+.grid-cell {
+  border-radius: 3px;
+  background: var(--cell-bg);
+}
+
+.tile-container {
+  position: absolute;
+  z-index: 2;
+}
+
+/* ------------------------------------------------------------------
+   Tiles
+   ------------------------------------------------------------------ */
+.tile, .tile .tile-inner {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  line-height: var(--tile-size);
+}
+
+.tile {
+  position: absolute;
+  -webkit-transition: 100ms ease-in-out;
+  -moz-transition: 100ms ease-in-out;
+  transition: 100ms ease-in-out;
+  -webkit-transition-property: -webkit-transform;
+  -moz-transition-property: -moz-transform;
+  transition-property: transform;
+}
+
+/* Type scales with the tile, so the same rules read correctly on a cramped
+   8x8 board and a roomy 3x3 one. */
+.tile .tile-inner {
+  border-radius: 3px;
+  text-align: center;
+  font-weight: bold;
+  z-index: 10;
+  font-size: calc(var(--tile-size) * 0.51);
+  text-shadow: 2px 2px 4px var(--tile-shadow);
+  color: var(--tile-ink);
+}
+
+.tile.tile-2    .tile-inner { background: #cc0000; }
+.tile.tile-4    .tile-inner { background: #cccc00; }
+.tile.tile-8    .tile-inner { background: #00cc00; }
+.tile.tile-16   .tile-inner { background: #00cccc; }
+.tile.tile-32   .tile-inner { background: #0000cc; }
+.tile.tile-64   .tile-inner { background: #cc00cc; }
+.tile.tile-128  .tile-inner { background: #cc6600; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.2381), inset 0 0 0 1px rgba(255, 255, 255, 0.14286); font-size: calc(var(--tile-size) * 0.42); }
+.tile.tile-256  .tile-inner { background: #66cc00; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.31746), inset 0 0 0 1px rgba(255, 255, 255, 0.19048); font-size: calc(var(--tile-size) * 0.42); }
+.tile.tile-512  .tile-inner { background: #00cc66; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.39683), inset 0 0 0 1px rgba(255, 255, 255, 0.2381); font-size: calc(var(--tile-size) * 0.42); }
+.tile.tile-1024 .tile-inner { background: #0066cc; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.47619), inset 0 0 0 1px rgba(255, 255, 255, 0.28571); font-size: calc(var(--tile-size) * 0.33); }
+.tile.tile-2048 .tile-inner { background: #6600cc; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.55556), inset 0 0 0 1px rgba(255, 255, 255, 0.33333); font-size: calc(var(--tile-size) * 0.33); }
+.tile.tile-super .tile-inner { background: #cc0066; font-size: calc(var(--tile-size) * 0.28); }
+
+/* Night-mode tile ramp: same hue order, less glare against the dark board. */
+:root[data-theme="dark"] .tile.tile-2    .tile-inner { background: #a62929; }
+:root[data-theme="dark"] .tile.tile-4    .tile-inner { background: #a3a32c; }
+:root[data-theme="dark"] .tile.tile-8    .tile-inner { background: #2a9d4a; }
+:root[data-theme="dark"] .tile.tile-16   .tile-inner { background: #2a9ba8; }
+:root[data-theme="dark"] .tile.tile-32   .tile-inner { background: #2f4bb5; }
+:root[data-theme="dark"] .tile.tile-64   .tile-inner { background: #a52f9c; }
+:root[data-theme="dark"] .tile.tile-128  .tile-inner { background: #a8641f; }
+:root[data-theme="dark"] .tile.tile-256  .tile-inner { background: #5f9c2a; }
+:root[data-theme="dark"] .tile.tile-512  .tile-inner { background: #1f9c72; }
+:root[data-theme="dark"] .tile.tile-1024 .tile-inner { background: #2a6ba8; }
+:root[data-theme="dark"] .tile.tile-2048 .tile-inner { background: #6a3fb5; }
+:root[data-theme="dark"] .tile.tile-super .tile-inner { background: #b53f7a; }
+
+/* Cell positions, 1-based. The transform is a multiple of the pitch, so the
+   slide transition works the same at any board size. */
+.tile.tile-position-1-1 { transform: translate(calc(var(--tile-pitch) * 0), calc(var(--tile-pitch) * 0)); }
+.tile.tile-position-1-2 { transform: translate(calc(var(--tile-pitch) * 0), calc(var(--tile-pitch) * 1)); }
+.tile.tile-position-1-3 { transform: translate(calc(var(--tile-pitch) * 0), calc(var(--tile-pitch) * 2)); }
+.tile.tile-position-1-4 { transform: translate(calc(var(--tile-pitch) * 0), calc(var(--tile-pitch) * 3)); }
+.tile.tile-position-1-5 { transform: translate(calc(var(--tile-pitch) * 0), calc(var(--tile-pitch) * 4)); }
+.tile.tile-position-1-6 { transform: translate(calc(var(--tile-pitch) * 0), calc(var(--tile-pitch) * 5)); }
+.tile.tile-position-1-7 { transform: translate(calc(var(--tile-pitch) * 0), calc(var(--tile-pitch) * 6)); }
+.tile.tile-position-1-8 { transform: translate(calc(var(--tile-pitch) * 0), calc(var(--tile-pitch) * 7)); }
+
+.tile.tile-position-2-1 { transform: translate(calc(var(--tile-pitch) * 1), calc(var(--tile-pitch) * 0)); }
+.tile.tile-position-2-2 { transform: translate(calc(var(--tile-pitch) * 1), calc(var(--tile-pitch) * 1)); }
+.tile.tile-position-2-3 { transform: translate(calc(var(--tile-pitch) * 1), calc(var(--tile-pitch) * 2)); }
+.tile.tile-position-2-4 { transform: translate(calc(var(--tile-pitch) * 1), calc(var(--tile-pitch) * 3)); }
+.tile.tile-position-2-5 { transform: translate(calc(var(--tile-pitch) * 1), calc(var(--tile-pitch) * 4)); }
+.tile.tile-position-2-6 { transform: translate(calc(var(--tile-pitch) * 1), calc(var(--tile-pitch) * 5)); }
+.tile.tile-position-2-7 { transform: translate(calc(var(--tile-pitch) * 1), calc(var(--tile-pitch) * 6)); }
+.tile.tile-position-2-8 { transform: translate(calc(var(--tile-pitch) * 1), calc(var(--tile-pitch) * 7)); }
+
+.tile.tile-position-3-1 { transform: translate(calc(var(--tile-pitch) * 2), calc(var(--tile-pitch) * 0)); }
+.tile.tile-position-3-2 { transform: translate(calc(var(--tile-pitch) * 2), calc(var(--tile-pitch) * 1)); }
+.tile.tile-position-3-3 { transform: translate(calc(var(--tile-pitch) * 2), calc(var(--tile-pitch) * 2)); }
+.tile.tile-position-3-4 { transform: translate(calc(var(--tile-pitch) * 2), calc(var(--tile-pitch) * 3)); }
+.tile.tile-position-3-5 { transform: translate(calc(var(--tile-pitch) * 2), calc(var(--tile-pitch) * 4)); }
+.tile.tile-position-3-6 { transform: translate(calc(var(--tile-pitch) * 2), calc(var(--tile-pitch) * 5)); }
+.tile.tile-position-3-7 { transform: translate(calc(var(--tile-pitch) * 2), calc(var(--tile-pitch) * 6)); }
+.tile.tile-position-3-8 { transform: translate(calc(var(--tile-pitch) * 2), calc(var(--tile-pitch) * 7)); }
+
+.tile.tile-position-4-1 { transform: translate(calc(var(--tile-pitch) * 3), calc(var(--tile-pitch) * 0)); }
+.tile.tile-position-4-2 { transform: translate(calc(var(--tile-pitch) * 3), calc(var(--tile-pitch) * 1)); }
+.tile.tile-position-4-3 { transform: translate(calc(var(--tile-pitch) * 3), calc(var(--tile-pitch) * 2)); }
+.tile.tile-position-4-4 { transform: translate(calc(var(--tile-pitch) * 3), calc(var(--tile-pitch) * 3)); }
+.tile.tile-position-4-5 { transform: translate(calc(var(--tile-pitch) * 3), calc(var(--tile-pitch) * 4)); }
+.tile.tile-position-4-6 { transform: translate(calc(var(--tile-pitch) * 3), calc(var(--tile-pitch) * 5)); }
+.tile.tile-position-4-7 { transform: translate(calc(var(--tile-pitch) * 3), calc(var(--tile-pitch) * 6)); }
+.tile.tile-position-4-8 { transform: translate(calc(var(--tile-pitch) * 3), calc(var(--tile-pitch) * 7)); }
+
+.tile.tile-position-5-1 { transform: translate(calc(var(--tile-pitch) * 4), calc(var(--tile-pitch) * 0)); }
+.tile.tile-position-5-2 { transform: translate(calc(var(--tile-pitch) * 4), calc(var(--tile-pitch) * 1)); }
+.tile.tile-position-5-3 { transform: translate(calc(var(--tile-pitch) * 4), calc(var(--tile-pitch) * 2)); }
+.tile.tile-position-5-4 { transform: translate(calc(var(--tile-pitch) * 4), calc(var(--tile-pitch) * 3)); }
+.tile.tile-position-5-5 { transform: translate(calc(var(--tile-pitch) * 4), calc(var(--tile-pitch) * 4)); }
+.tile.tile-position-5-6 { transform: translate(calc(var(--tile-pitch) * 4), calc(var(--tile-pitch) * 5)); }
+.tile.tile-position-5-7 { transform: translate(calc(var(--tile-pitch) * 4), calc(var(--tile-pitch) * 6)); }
+.tile.tile-position-5-8 { transform: translate(calc(var(--tile-pitch) * 4), calc(var(--tile-pitch) * 7)); }
+
+.tile.tile-position-6-1 { transform: translate(calc(var(--tile-pitch) * 5), calc(var(--tile-pitch) * 0)); }
+.tile.tile-position-6-2 { transform: translate(calc(var(--tile-pitch) * 5), calc(var(--tile-pitch) * 1)); }
+.tile.tile-position-6-3 { transform: translate(calc(var(--tile-pitch) * 5), calc(var(--tile-pitch) * 2)); }
+.tile.tile-position-6-4 { transform: translate(calc(var(--tile-pitch) * 5), calc(var(--tile-pitch) * 3)); }
+.tile.tile-position-6-5 { transform: translate(calc(var(--tile-pitch) * 5), calc(var(--tile-pitch) * 4)); }
+.tile.tile-position-6-6 { transform: translate(calc(var(--tile-pitch) * 5), calc(var(--tile-pitch) * 5)); }
+.tile.tile-position-6-7 { transform: translate(calc(var(--tile-pitch) * 5), calc(var(--tile-pitch) * 6)); }
+.tile.tile-position-6-8 { transform: translate(calc(var(--tile-pitch) * 5), calc(var(--tile-pitch) * 7)); }
+
+.tile.tile-position-7-1 { transform: translate(calc(var(--tile-pitch) * 6), calc(var(--tile-pitch) * 0)); }
+.tile.tile-position-7-2 { transform: translate(calc(var(--tile-pitch) * 6), calc(var(--tile-pitch) * 1)); }
+.tile.tile-position-7-3 { transform: translate(calc(var(--tile-pitch) * 6), calc(var(--tile-pitch) * 2)); }
+.tile.tile-position-7-4 { transform: translate(calc(var(--tile-pitch) * 6), calc(var(--tile-pitch) * 3)); }
+.tile.tile-position-7-5 { transform: translate(calc(var(--tile-pitch) * 6), calc(var(--tile-pitch) * 4)); }
+.tile.tile-position-7-6 { transform: translate(calc(var(--tile-pitch) * 6), calc(var(--tile-pitch) * 5)); }
+.tile.tile-position-7-7 { transform: translate(calc(var(--tile-pitch) * 6), calc(var(--tile-pitch) * 6)); }
+.tile.tile-position-7-8 { transform: translate(calc(var(--tile-pitch) * 6), calc(var(--tile-pitch) * 7)); }
+
+.tile.tile-position-8-1 { transform: translate(calc(var(--tile-pitch) * 7), calc(var(--tile-pitch) * 0)); }
+.tile.tile-position-8-2 { transform: translate(calc(var(--tile-pitch) * 7), calc(var(--tile-pitch) * 1)); }
+.tile.tile-position-8-3 { transform: translate(calc(var(--tile-pitch) * 7), calc(var(--tile-pitch) * 2)); }
+.tile.tile-position-8-4 { transform: translate(calc(var(--tile-pitch) * 7), calc(var(--tile-pitch) * 3)); }
+.tile.tile-position-8-5 { transform: translate(calc(var(--tile-pitch) * 7), calc(var(--tile-pitch) * 4)); }
+.tile.tile-position-8-6 { transform: translate(calc(var(--tile-pitch) * 7), calc(var(--tile-pitch) * 5)); }
+.tile.tile-position-8-7 { transform: translate(calc(var(--tile-pitch) * 7), calc(var(--tile-pitch) * 6)); }
+.tile.tile-position-8-8 { transform: translate(calc(var(--tile-pitch) * 7), calc(var(--tile-pitch) * 7)); }
+
+
+/* ------------------------------------------------------------------
+   Tile animations
+   ------------------------------------------------------------------ */
+
+/* New tile scales up from nothing */
+@-webkit-keyframes appear {
+  0%   { opacity: 0; -webkit-transform: scale(0); -moz-transform: scale(0); transform: scale(0); }
+  100% { opacity: 1; -webkit-transform: scale(1); -moz-transform: scale(1); transform: scale(1); }
+}
+@-moz-keyframes appear {
+  0%   { opacity: 0; -webkit-transform: scale(0); -moz-transform: scale(0); transform: scale(0); }
+  100% { opacity: 1; -webkit-transform: scale(1); -moz-transform: scale(1); transform: scale(1); }
+}
+@keyframes appear {
+  0%   { opacity: 0; -webkit-transform: scale(0); -moz-transform: scale(0); transform: scale(0); }
+  100% { opacity: 1; -webkit-transform: scale(1); -moz-transform: scale(1); transform: scale(1); }
+}
+
+.tile-new .tile-inner {
+  -webkit-animation: appear 200ms ease 100ms;
+  -moz-animation: appear 200ms ease 100ms;
+  animation: appear 200ms ease 100ms;
+  -webkit-animation-fill-mode: backwards;
+  -moz-animation-fill-mode: backwards;
+  animation-fill-mode: backwards;
+}
+
+/* Merged tile overshoots then settles */
+@-webkit-keyframes pop {
+  0%   { -webkit-transform: scale(0); -moz-transform: scale(0); transform: scale(0); }
+  50%  { -webkit-transform: scale(1.2); -moz-transform: scale(1.2); transform: scale(1.2); }
+  100% { -webkit-transform: scale(1); -moz-transform: scale(1); transform: scale(1); }
+}
+@-moz-keyframes pop {
+  0%   { -webkit-transform: scale(0); -moz-transform: scale(0); transform: scale(0); }
+  50%  { -webkit-transform: scale(1.2); -moz-transform: scale(1.2); transform: scale(1.2); }
+  100% { -webkit-transform: scale(1); -moz-transform: scale(1); transform: scale(1); }
+}
+@keyframes pop {
+  0%   { -webkit-transform: scale(0); -moz-transform: scale(0); transform: scale(0); }
+  50%  { -webkit-transform: scale(1.2); -moz-transform: scale(1.2); transform: scale(1.2); }
+  100% { -webkit-transform: scale(1); -moz-transform: scale(1); transform: scale(1); }
+}
+
+.tile-merged .tile-inner {
+  z-index: 20;
+  -webkit-animation: pop 200ms ease 100ms;
+  -moz-animation: pop 200ms ease 100ms;
+  animation: pop 200ms ease 100ms;
+  -webkit-animation-fill-mode: backwards;
+  -moz-animation-fill-mode: backwards;
+  animation-fill-mode: backwards;
+}
+
+/* ------------------------------------------------------------------
+   Game over / win overlay
+   ------------------------------------------------------------------ */
+@-webkit-keyframes fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@-moz-keyframes fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.game-container .game-message {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--overlay-bg);
+  z-index: 100;
+  text-align: center;
+  -webkit-animation: fade-in 300ms ease;
+  -moz-animation: fade-in 300ms ease;
+  animation: fade-in 300ms ease;
+  -webkit-animation-fill-mode: both;
+  -moz-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+.game-container .game-message p {
+  font-size: 60px;
+  font-weight: bold;
+  height: 60px;
+  line-height: 60px;
+  margin-top: 222px;
+}
+
+.game-container .game-message .lower {
+  display: block;
+  margin-top: 59px;
+}
+
+.game-container .game-message a {
+  display: inline-block;
+  background: var(--button-bg);
+  border-radius: 3px;
+  padding: 0 20px;
+  text-decoration: none;
+  color: var(--button-ink);
+  height: 40px;
+  line-height: 42px;
+  margin-left: 9px;
+}
+
+.game-container .game-message a.keep-playing-button,
+.game-container .game-message a.size-change-confirm-button,
+.game-container .game-message a.size-change-cancel-button { display: none; }
+
+.game-container .game-message.game-won {
+  background: var(--overlay-won-bg);
+  color: var(--button-ink);
+}
+.game-container .game-message.game-won a.keep-playing-button { display: inline-block; }
+
+.game-container .game-message.game-size-change {
+  display: block;
+  color: var(--button-ink);
+}
+
+.game-container .game-message.game-size-change p {
+  height: auto;
+  margin: 185px 30px 0;
+  font-size: 32px;
+  line-height: 40px;
+}
+
+.game-container .game-message.game-size-change .lower { margin-top: 35px; }
+.game-container .game-message.game-size-change a.retry-button { display: none; }
+.game-container .game-message.game-size-change a.size-change-confirm-button,
+.game-container .game-message.game-size-change a.size-change-cancel-button { display: inline-block; }
+
+.game-container .game-message.game-won,
+.game-container .game-message.game-over { display: block; }
+
+/* ------------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------------ */
+.above-game:after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+.restart-button {
+  display: block;
+  float: right;
+  background: var(--button-bg);
+  border-radius: 3px;
+  padding: 0 20px;
+  text-decoration: none;
+  color: var(--button-ink);
+  height: 40px;
+  line-height: 42px;
+  text-align: center;
+  margin-right: 5px;
+}
+
+.undo-button { margin-right: 5px; }
+
+.disabled { background: var(--cell-bg); }
+
+/* ------------------------------------------------------------------
+   Board size slider
+   ------------------------------------------------------------------ */
+.board-size {
+  clear: both;
+  padding-top: 10px;
+  text-align: right;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.board-size label {
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.board-size-lock {
+  display: inline-block;
+  width: 18px;
+  margin-right: 4px;
+  vertical-align: middle;
+  font-size: 17px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.board-size-lock:after { content: "\1F513"; }
+.board-size-lock.locked:after { content: "\1F512"; }
+
+.board-size-value {
+  display: inline-block;
+  min-width: 36px;
+  text-align: right;
+  vertical-align: middle;
+  font-size: 15px;
+}
+
+.board-size-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  vertical-align: middle;
+  width: 120px;
+  height: 6px;
+  margin: 0 10px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: var(--cell-bg);
+  outline: none;
+  cursor: pointer;
+}
+
+.board-size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: var(--board-bg);
+  cursor: pointer;
+}
+
+.board-size-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: var(--board-bg);
+  cursor: pointer;
+}
+
+.board-size-slider:focus::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--focus-ring); }
+.board-size-slider:focus::-moz-range-thumb     { box-shadow: 0 0 0 3px var(--focus-ring); }
+
+/* ------------------------------------------------------------------
+   Night mode toggle
+
+   Lifted from the portfolio site: a fixed round button above everything,
+   swapping a moon for a sun. The icons are inline SVG, so the two visible
+   icons here are the only ones that need to exist.
+   ------------------------------------------------------------------ */
+.theme-toggle {
+  position: fixed;
+  top: 1.1rem;
+  right: 1.1rem;
+  z-index: 100;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--page-bg);
+  box-shadow: 0 0.5rem 1.5rem var(--toggle-shadow);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.25s ease, color 0.25s ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-2px);
+}
+
+.theme-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.theme-toggle .icon-sun { display: none; }
+
+:root[data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+.game-explanation { margin-top: 50px; }
+
+/* ------------------------------------------------------------------
+   Mobile
+   ------------------------------------------------------------------ */
+@media screen and (max-width: 520px) {
+  .theme-toggle {
+    top: 0.6rem;
+    right: 0.6rem;
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  :root {
+    --board-size: 280px;
+    --board-padding: 10px;
+    --tile-gap: 10px;
+  }
+
+  html, body { font-size: 15px; }
+
+  body {
+    margin: 20px 0;
+    padding: 0 20px;
+  }
+
+  h1.title {
+    font-size: 27px;
+    margin-top: 15px;
+  }
+
+  .score-container, .best-container {
+    margin-top: 0;
+    padding: 15px 10px;
+    min-width: 40px;
+  }
+
+  .heading { margin-bottom: 10px; }
+
+  .restart-button {
+    width: 42%;
+    padding: 0;
+    display: block;
+    box-sizing: border-box;
+    margin-top: 2px;
+  }
+
+  .game-container { margin-top: 17px; }
+
+  .board-size-slider { width: 90px; margin: 0 6px; }
+
+  .game-container .game-message p {
+    font-size: 60px;
+    height: 60px;
+    line-height: 60px;
+    margin-top: 222px;
+  }
+  .game-container .game-message .lower { margin-top: 59px; }
+
+  .game-message p {
+    font-size: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    margin-top: 90px !important;
+  }
+  .game-message .lower { margin-top: 30px !important; }
+}
