@@ -1,31 +1,101 @@
 # Operating system files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
+ehthumbs.db
 Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.stackdump
 
 #Agent stuff
 AGENTS.md
 
+# Local agent / AI tooling settings
+.claude/
+.cursor/
+.codex/
+.windsurf/
+.aider*
+
 # Editor and IDE settings
 .vscode/
 .idea/
+.vs/
+.history/
 *.swp
 *.swo
 *~
+*.bak
+*.orig
+*.rej
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Secrets and local environment -- never commit these
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.der
+*.keystore
+*.jks
+id_rsa*
+id_ed25519*
+*.ppk
+.npmrc
+.pypirc
+.netrc
 
 # Logs and temporary files
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 *.tmp
 *.temp
 
 # Test and coverage output
 coverage/
+tests/
+browser-screenshots/
+.nyc_output/
 test-results/
+playwright-report/
+*.lcov
+*.har
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
 
 # Accidental dependency/build output (this project does not require these)
 node_modules/
+.pnpm-store/
+.yarn/
 dist/
 build/
+.next/
+.nuxt/
+.output/
+.cache/
+.parcel-cache/
+.venv/
+venv/
 
 # Test folder and scripts
 tests/
