@@ -97,6 +97,9 @@
   --brand-bg-hover: #115ea3;
   --brand-bg-pressed: #0c3b5e;
   --on-brand: #ffffff;
+  /* Key-hint chips sit on a filled action, so they tint the fill rather than
+     introducing a colour of their own. */
+  --on-brand-tint: rgba(255, 255, 255, 0.18);
   --brand-tint: #ebf3fc;
   --brand-tint-strong: #d7e8f9;
 
@@ -207,7 +210,8 @@ html {
 }
 
 body {
-  margin: 48px 0 64px;
+  margin: 0;
+  padding: 0 0 64px;
   background: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -276,56 +280,183 @@ hr {
   border-radius: var(--radius-control);
 }
 
+/* Keyboard users land here first; it slides in only while focused. */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 6px;
+  color: var(--on-brand);
+  background: var(--brand-bg);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--dur-normal) var(--ease-standard);
+}
+
+.skip-link:focus-visible { transform: none; }
+
+/* The game column: one board wide, centred under the app bar. */
 .container {
   width: var(--board-size);
   max-width: 100%;
   margin: 0 auto;
+  padding: 32px 0 0;
+  box-sizing: border-box;
 }
+
+.page-title {
+  margin: 0 0 24px;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.page-body {
+  color: var(--fg-2);
+  font-size: 15px;
+}
+
+.page-body strong { color: var(--fg-1); }
 
 /* ------------------------------------------------------------------
-   Heading
+   App bar
+
+   The same shape as the author's site: a sticky acrylic strip with the brand
+   on the left, the page links next to it and the game's controls on the
+   right. It reads the same tokens as everything else, so night mode needs no
+   rule of its own here.
    ------------------------------------------------------------------ */
-.heading {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 8px;
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  border-bottom: 1px solid var(--stroke-1);
+  background: var(--bg-acrylic);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  transition: box-shadow var(--dur-normal) var(--ease-standard);
 }
 
-h1.title {
-  margin: 0;
+.appbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  box-sizing: border-box;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  color: var(--fg-1);
+  text-decoration: none;
+}
+
+.brand:hover { color: var(--fg-1); }
+
+/* A two-by-two board glyph in the slot the site gives its avatar square. */
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--brand-tint);
+  color: var(--brand-bg);
+  box-shadow: inset 0 0 0 1px var(--brand-tint-strong);
+}
+
+.brand-mark svg { display: block; width: 20px; height: 20px; fill: currentColor; }
+
+.brand-text { display: flex; flex-direction: column; min-width: 0; }
+
+.brand-name {
   font-family: var(--font-display);
-  font-size: 80px;
+  font-size: 16px;
   font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.035em;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.brand-sub {
+  color: var(--fg-3);
+  font-size: 11.5px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--radius-control);
+  color: var(--fg-2);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.nav-link:hover { background: var(--bg-subtle); color: var(--fg-1); }
+.nav-link[aria-current="page"] { background: var(--brand-tint); color: var(--brand); }
+
+/* Undo, New Game, score and best share one line on the right of the bar. */
+.appbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .scores-container {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
+  order: 3;
+  margin-left: 4px;
 }
 
-/* A Fluent surface card. The label is generated as ::after but the card is a
-   column in reverse, so the label lands above the number without new markup. */
+/* Compact score cards: the same surface treatment as before, sized for the
+   bar. The label is generated as ::after and the card is a reversed column,
+   so the label lands above the number without new markup. */
 .score-container, .best-container {
   position: relative;
   display: inline-flex;
   flex-direction: column-reverse;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
   box-sizing: border-box;
-  min-width: 88px;
-  height: 56px;
-  padding: 4px 16px;
+  min-width: 68px;
+  height: 40px;
+  padding: 2px 10px;
   background: var(--box-bg);
   border-radius: var(--radius-card);
   box-shadow: inset 0 0 0 1px var(--stroke-1), var(--shadow-2);
   color: var(--fg-1);
-  font-size: 24px;
+  font-size: 17px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
@@ -334,23 +465,24 @@ h1.title {
 
 .score-container:after, .best-container:after {
   text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 9px;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--box-label);
 }
 
 .score-container:after { content: "Score"; }
 .best-container:after  { content: "Best"; }
 
+/* The gain rises out of the chip and clears the bar. */
 .score-container .score-addition, .best-container .score-addition {
   position: absolute;
-  right: 30px;
-  top: 25px;
-  font-size: 25px;
-  line-height: 25px;
-  font-weight: 600;
+  right: 10px;
+  top: 6px;
+  font-size: 13px;
+  line-height: 13px;
+  font-weight: 700;
   color: var(--gain-ink);
   z-index: 100;
   -webkit-animation: move-up 600ms ease-in;
@@ -361,18 +493,18 @@ h1.title {
   animation-fill-mode: both;
 }
 
-/* Floating "+4" that rises out of the score box */
+/* Floating "+4" that rises out of the score chip */
 @-webkit-keyframes move-up {
-  0%   { top: 25px;  opacity: 1; }
-  100% { top: -50px; opacity: 0; }
+  0%   { top: 6px;   opacity: 1; }
+  100% { top: -26px; opacity: 0; }
 }
 @-moz-keyframes move-up {
-  0%   { top: 25px;  opacity: 1; }
-  100% { top: -50px; opacity: 0; }
+  0%   { top: 6px;   opacity: 1; }
+  100% { top: -26px; opacity: 0; }
 }
 @keyframes move-up {
-  0%   { top: 25px;  opacity: 1; }
-  100% { top: -50px; opacity: 0; }
+  0%   { top: 6px;   opacity: 1; }
+  100% { top: -26px; opacity: 0; }
 }
 
 /* ------------------------------------------------------------------
@@ -385,7 +517,8 @@ h1.title {
   --tile-size: calc((var(--board-inner) - (var(--n) - 1) * var(--tile-gap)) / var(--n));
   --tile-pitch: calc(var(--tile-size) + var(--tile-gap));
 
-  margin-top: 32px;
+  /* The size row above the board already supplies the gap. */
+  margin-top: 0;
   position: relative;
   padding: var(--board-padding);
   cursor: default;
@@ -818,30 +951,28 @@ h1.title {
 .confirm-message .restart-confirm-button:active { background: var(--brand-bg-pressed); }
 
 /* ------------------------------------------------------------------
-   Buttons
-   ------------------------------------------------------------------ */
-.above-game:after {
-  content: "";
-  display: block;
-  clear: both;
-}
+   App bar actions
 
-/* Still floats: how.html reuses this block for a single back link, and a flex
-   row would move that link to the right edge. */
+   New Game is the primary action, Undo the secondary one. DOM order stays
+   New Game first — KeyboardInputManager binds the first .restart-button to
+   restart — and `order` puts Undo to its left on screen.
+   ------------------------------------------------------------------ */
 .restart-button {
-  display: block;
-  float: right;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  order: 2;
   box-sizing: border-box;
-  background: var(--button-bg);
-  border-radius: var(--radius-control);
-  padding: 0 20px;
-  text-decoration: none;
-  color: var(--button-ink);
-  font-weight: 600;
   height: 40px;
-  line-height: 40px;
-  text-align: center;
-  margin-right: 5px;
+  padding: 0 14px;
+  border-radius: var(--radius-control);
+  background: var(--button-bg);
+  color: var(--button-ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
   box-shadow: var(--shadow-2);
   transition: background var(--dur-fast) var(--ease-standard),
     transform var(--dur-fast) var(--ease-standard);
@@ -852,7 +983,7 @@ h1.title {
 
 /* Undo is the secondary action: a resting surface with a stroke. */
 .undo-button {
-  margin-right: 8px;
+  order: 1;
   background: var(--bg-surface);
   color: var(--fg-1);
   box-shadow: inset 0 0 0 1px var(--stroke-2), var(--shadow-2);
@@ -860,6 +991,29 @@ h1.title {
 
 .undo-button:hover { background: var(--bg-subtle); }
 .undo-button:active { background: var(--bg-subtle-hover); }
+
+/* The [R] / [U] hints, drawn as chips rather than as bracket text. */
+.key-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--on-brand-tint);
+  color: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.undo-button .key-hint,
+.restart-button.disabled .key-hint {
+  background: var(--bg-subtle-hover);
+  color: var(--fg-3);
+}
 
 /* Declared last so it wins over the two variants above. */
 .restart-button.disabled,
@@ -881,7 +1035,7 @@ h1.title {
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 12px;
+  padding: 0 0 12px;
   font-size: 12px;
   line-height: 20px;
   font-weight: 600;
@@ -970,18 +1124,16 @@ h1.title {
 /* ------------------------------------------------------------------
    Night mode toggle
 
-   Lifted from the portfolio site: a floating button above everything, in the
-   brand tint, swapping a moon for a sun. The icons are inline SVG, so the two
-   visible icons here are the only ones that need to exist.
+   In the app bar, in the site's brand-tinted pill: the switch that stays put
+   while the page scrolls. The icons are inline SVG, so the two visible icons
+   here are the only ones that need to exist.
    ------------------------------------------------------------------ */
 .theme-toggle {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 100;
+  order: 4;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: none;
   width: 40px;
   height: 40px;
   padding: 0;
@@ -1016,7 +1168,7 @@ h1.title {
 :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 
 .game-explanation {
-  margin-top: 48px;
+  margin-top: 32px;
   color: var(--fg-2);
   font-size: 15px;
 }
@@ -1024,19 +1176,84 @@ h1.title {
 .game-explanation strong { color: var(--fg-1); }
 
 /* ------------------------------------------------------------------
-   Mobile
+   Narrow layouts
+
+   Two steps. The bar wraps as soon as its single row would overflow (it needs
+   about 930px of content), and the board only shrinks once the 500px column
+   no longer fits a phone screen.
    ------------------------------------------------------------------ */
-@media screen and (max-width: 520px) {
-  /* On a narrow screen the column fills the viewport, so a fixed top-right
-     button would sit on top of New Game. The top-left corner is empty there:
-     the heading starts a row lower, and the buttons float right. */
-  .theme-toggle {
-    top: 12px;
-    right: auto;
-    left: 12px;
-    width: 36px;
-    height: 36px;
+@media screen and (max-width: 960px) {
+  .appbar-inner {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 16px;
   }
+
+  .brand { order: 1; }
+  .brand-sub { display: none; }
+
+  .theme-toggle {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .nav {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: -8px;
+    gap: 2px;
+  }
+
+  .nav-link {
+    height: 30px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .appbar-actions {
+    order: 4;
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+
+  .scores-container { margin-left: auto; }
+}
+
+@media screen and (max-width: 520px) {
+  html, body { font-size: 15px; }
+
+  body { padding: 0 20px 40px; }
+
+  .container { padding-top: 20px; }
+
+  .page-title { font-size: 30px; }
+
+  .brand-name { font-size: 15px; }
+
+  .theme-toggle { width: 36px; height: 36px; }
+
+  .restart-button {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  /* No keyboard on a phone, so the hints go away and the row gets shorter. */
+  .key-hint { display: none; }
+
+  .scores-container {
+    margin-left: auto;
+    gap: 6px;
+  }
+
+  .score-container, .best-container {
+    min-width: 56px;
+    height: 36px;
+    padding: 1px 8px;
+    font-size: 15px;
+  }
+
+  .score-container:after, .best-container:after { font-size: 8px; }
 
   :root {
     --board-size: 280px;
@@ -1044,44 +1261,7 @@ h1.title {
     --tile-gap: 10px;
   }
 
-  html, body { font-size: 15px; }
-
-  body {
-    margin: 24px 0 40px;
-    padding: 0 20px;
-  }
-
-  .heading { gap: 12px; }
-
-  h1.title {
-    font-size: 36px;
-    margin-top: 12px;
-  }
-
-  .scores-container { gap: 6px; }
-
-  .score-container, .best-container {
-    min-width: 76px;
-    height: 52px;
-    padding: 4px 10px;
-    font-size: 20px;
-  }
-
-  .score-container:after, .best-container:after { font-size: 10px; }
-
-  .heading { margin-bottom: 8px; }
-
-  .restart-button {
-    width: 42%;
-    padding: 0;
-    display: block;
-    box-sizing: border-box;
-    margin-top: 2px;
-  }
-
-  .game-container { margin-top: 16px; }
-
-  .board-size { gap: 6px; }
+  .board-size { gap: 6px; padding-bottom: 10px; }
   .board-size-slider { width: 90px; margin: 0 2px; }
 
   .game-container .game-message p {
@@ -1103,37 +1283,14 @@ h1.title {
     bottom: 24px;
     left: 18px;
   }
+  /* Both actions have to share one row inside the 280px board. */
   .confirm-message a {
     min-width: 76px;
+    padding: 0 12px;
+    margin: 0 3px;
     height: 42px;
     line-height: 40px;
   }
   .confirm-message .size-change-confirm-button,
   .confirm-message .restart-confirm-button { line-height: 42px; }
-}
-
-/* ------------------------------------------------------------------
-   Reduced motion
-
-   Remove the movement, keep the fades: sliding tiles, the merge pop, the
-   rising score gain and the Konami cascade are the vestibular part, so a
-   player who asked for less motion sees the new board state immediately.
-   Opacity transitions stay — a fade is not motion — which is also why the
-   overlay's 300ms fade is untouched.
-   ------------------------------------------------------------------ */
-@media (prefers-reduced-motion: reduce) {
-  .tile {
-    -webkit-transition: none;
-    -moz-transition: none;
-    transition: none;
-  }
-
-  .tile-new .tile-inner,
-  .tile-merged .tile-inner,
-  .score-container .score-addition,
-  .best-container .score-addition {
-    -webkit-animation: none;
-    -moz-animation: none;
-    animation: none;
-  }
 }

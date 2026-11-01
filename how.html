@@ -20,28 +20,50 @@
   </script>
 </head>
 <body>
-  <button class="theme-toggle" type="button" aria-label="Switch to dark mode">
-    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-    </svg>
-    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="4"></circle>
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
-    </svg>
-  </button>
+  <a class="skip-link" href="#howto">Skip to the guide</a>
 
-  <div class="container">
-    <div class="heading">
-      <h1 class="title">2048</h1>
+  <header class="appbar">
+    <div class="appbar-inner">
+      <a class="brand" href="./index.html">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <rect x="3" y="3" width="8" height="8" rx="1.6" opacity=".45"></rect>
+            <rect x="13" y="3" width="8" height="8" rx="1.6" opacity=".65"></rect>
+            <rect x="3" y="13" width="8" height="8" rx="1.6" opacity=".8"></rect>
+            <rect x="13" y="13" width="8" height="8" rx="1.6"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">2048</span>
+          <span class="brand-sub">Unlimited undo &middot; 3&times;3&ndash;8&times;8</span>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="Pages">
+        <a class="nav-link" href="./how.html" aria-current="page">How to play</a>
+        <a class="nav-link" href="https://github.com/gabrielecirulli/2048" rel="noopener" target="_blank">Inspired by 2048</a>
+      </nav>
+
+      <div class="appbar-actions">
+        <a class="restart-button" href="./index.html">Play</a>
+        <button class="theme-toggle" type="button" aria-label="Switch to dark mode">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+        </button>
+      </div>
     </div>
+  </header>
 
-    <div class="above-game">
-      <p><a href="./index.html">&larr; Back to the game</a></p>
-    </div>
+  <main class="container" id="howto">
+    <h1 class="page-title">How to play &amp; tips</h1>
 
-    <div class="game-explanation">
+    <div class="page-body">
       <p>
-        <strong class="important">How to play 2048 with UNDO:</strong><br>
         Use the arrow or WASD keys on the keyboard of your computer or swipe in all four
         directions within the field on your smartphone. The occupied cells will be
         rushed to the empty cells in the particular direction. If two cells with the
@@ -94,15 +116,8 @@
         <li>Avoid the LEFT arrow. Do not use it unless there is no other move left.</li>
         <li>Try to keep the right vertical column full.</li>
       </ol>
-      <br>
-      <a href="./index.html">&larr; Back to the game</a></p>
-
-      <hr>
-      <p align="center">
-        <a href="https://github.com/gabrielecirulli/2048" rel="noopener" target="_blank">Inspired by the original 2048 by Gabriele Cirulli</a>
-      </p>
     </div>
-  </div>
+  </main>
 
   <script src="js/theme_manager.js"></script>
 </body>

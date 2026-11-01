@@ -20,31 +20,59 @@
   </script>
 </head>
 <body>
-  <button class="theme-toggle" type="button" aria-label="Switch to dark mode">
-    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-    </svg>
-    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="4"></circle>
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
-    </svg>
-  </button>
+  <a class="skip-link" href="#game">Skip to the game</a>
 
-  <div class="container">
-    <div class="game-area">
-      <div class="above-game">
-        <a class="restart-button">New Game [r]</a>
-        <a class="restart-button undo-button disabled">Undo [u]</a>
-      </div>
+  <header class="appbar">
+    <div class="appbar-inner">
+      <!-- The logo block: a two-by-two board glyph and the game's name, in the
+           same slot and shape as the brand cluster on the author's site. -->
+      <a class="brand" href="./index.html">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <rect x="3" y="3" width="8" height="8" rx="1.6" opacity=".45"></rect>
+            <rect x="13" y="3" width="8" height="8" rx="1.6" opacity=".65"></rect>
+            <rect x="3" y="13" width="8" height="8" rx="1.6" opacity=".8"></rect>
+            <rect x="13" y="13" width="8" height="8" rx="1.6"></rect>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">2048</span>
+          <span class="brand-sub">Unlimited undo &middot; 3&times;3&ndash;8&times;8</span>
+        </span>
+      </a>
 
-      <div class="heading">
-        <h1 class="title">2048</h1>
+      <!-- The two links that used to sit at the bottom of the page. -->
+      <nav class="nav" aria-label="Pages">
+        <a class="nav-link" href="./how.html">How to play</a>
+        <a class="nav-link" href="https://github.com/gabrielecirulli/2048" rel="noopener" target="_blank">Inspired by 2048</a>
+      </nav>
+
+      <!-- Undo, New Game, score and best, on one line. New Game stays first in
+           the DOM because KeyboardInputManager binds the first .restart-button
+           to restart; CSS order puts Undo to its left. -->
+      <div class="appbar-actions">
+        <a class="restart-button">New Game <span class="key-hint">R</span></a>
+        <a class="restart-button undo-button disabled">Undo <span class="key-hint">U</span></a>
         <div class="scores-container">
           <div class="score-container">0</div>
           <div class="best-container">0</div>
         </div>
       </div>
 
+      <button class="theme-toggle" type="button" aria-label="Switch to dark mode">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="container" id="game">
+    <div class="game-area">
       <div class="board-size">
         <label for="board-size-slider">Board size</label>
         <input type="range" id="board-size-slider" class="board-size-slider"
@@ -100,14 +128,12 @@
     </div>
 
     <p class="game-explanation">
-      Use the arrow or WASD keys&mdash; or swipe(on touch devices) &mdash; to play.
-      Equal tiles that collide merge into one. Reach <strong>2048</strong> to win,
-      and use <strong>UNDO</strong> as often as you like.<br>
-      <a href="./how.html">How to play &amp; tips</a>
-      <br><br>
-      <a href="https://github.com/gabrielecirulli/2048" rel="noopener" target="_blank">Inspired by the original 2048 by <strong>Gabriele Cirulli</strong></a>
+      Use the arrow or WASD keys&mdash;&nbsp;or swipe on touch devices&nbsp;&mdash;
+      to play. Equal tiles that collide merge into one. Reach
+      <strong>2048</strong> to win, and use <strong>UNDO</strong> as often as you
+      like.
     </p>
-  </div>
+  </main>
 
   <script src="js/theme_manager.js"></script>
   <script src="js/keyboard_input_manager.js"></script>
