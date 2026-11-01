@@ -24,6 +24,8 @@
 
   <header class="appbar">
     <div class="appbar-inner">
+      <span class="nav-pill" aria-hidden="true"></span>
+
       <a class="brand" href="./index.html">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false">
@@ -33,15 +35,12 @@
             <rect x="13" y="13" width="8" height="8" rx="1.6"></rect>
           </svg>
         </span>
-        <span class="brand-text">
-          <span class="brand-name">2048</span>
-          <span class="brand-sub">Unlimited undo &middot; 3&times;3&ndash;8&times;8</span>
-        </span>
+        <span class="brand-name">2048</span>
       </a>
 
       <nav class="nav" aria-label="Pages">
         <a class="nav-link" href="./how.html" aria-current="page">How to play</a>
-        <a class="nav-link" href="https://github.com/gabrielecirulli/2048" rel="noopener" target="_blank">Inspired by 2048</a>
+        <a class="nav-link" href="https://github.com/gabrielecirulli/2048" rel="noopener" target="_blank">Original 2048<svg class="icon-link" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7.5 15 15 7.5"></path><path d="M9 7.5h6.5V14"></path></svg></a>
       </nav>
 
       <div class="appbar-actions">
@@ -120,5 +119,6 @@
   </main>
 
   <script src="js/theme_manager.js"></script>
+  <script src="js/nav_pill.js"></script>
 </body>
 </html>
