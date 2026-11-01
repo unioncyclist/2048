@@ -50,7 +50,20 @@
         <input type="range" id="board-size-slider" class="board-size-slider"
                min="3" max="8" step="1" value="4"
                aria-label="Board size, from 3 by 3 to 8 by 8">
-        <span class="board-size-lock" role="img" aria-label="Board size unlocked"></span>
+        <span class="board-size-lock" role="img" aria-label="Board size unlocked">
+          <svg class="icon-lock-open" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true" focusable="false">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+          </svg>
+          <svg class="icon-lock-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true" focusable="false">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </span>
         <span class="board-size-value">4&#215;4</span>
       </div>
 
@@ -69,11 +82,19 @@
         <div class="tile-container"></div>
       </div>
 
-      <div class="size-change-message">
+      <div class="confirm-message size-change-message">
         <p></p>
         <div class="lower">
           <a class="size-change-confirm-button">OK</a>
           <a class="size-change-cancel-button">Cancel</a>
+        </div>
+      </div>
+
+      <div class="confirm-message restart-confirm-message">
+        <p></p>
+        <div class="lower">
+          <a class="restart-confirm-button">OK</a>
+          <a class="restart-cancel-button">Cancel</a>
         </div>
       </div>
     </div>

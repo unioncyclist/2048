@@ -30,3 +30,6 @@ build/
 # Test folder and scripts
 tests/
 run_tests.ps1
+
+# Local visual-regression screenshots
+browser-screenshots/

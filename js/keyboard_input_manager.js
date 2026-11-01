@@ -2,6 +2,8 @@
 // the game rules.
 function KeyboardInputManager() {
   this.events = {};
+  // The hidden Konami code must be entered within this many milliseconds.
+  this.konamiWindow = 10000;
 
   if (window.navigator.msPointerEnabled) {
     // IE10 pointer events
@@ -67,11 +69,56 @@ KeyboardInputManager.prototype.listen = function () {
     }
   });
 
+  // Hidden Konami code: ↑ ↑ ↓ ↓ ← → ← → B A, all ten keys within ten
+  // seconds. It runs alongside the movement handler on purpose: the arrows
+  // and A still move the board, and the egg overwrites it at the end.
+  var konami = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown",
+                "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight",
+                "b", "a"];
+  var konamiProgress = 0;
+  var konamiStartedAt = 0;
+
+  document.addEventListener("keydown", function (event) {
+    if (event.repeat) return;
+
+    var key = self.konamiKey(event);
+    if (key === null) return;
+
+    if (konamiProgress > 0 && Date.now() - konamiStartedAt > self.konamiWindow) {
+      konamiProgress = 0;
+    }
+
+    if (konamiProgress === 0) {
+      if (key !== konami[0]) return;
+      konamiProgress = 1;
+      konamiStartedAt = Date.now();
+      return;
+    }
+
+    if (key !== konami[konamiProgress]) {
+      konamiProgress = 0;
+      if (key === konami[0]) {
+        konamiProgress = 1;
+        konamiStartedAt = Date.now();
+      }
+      return;
+    }
+
+    konamiProgress++;
+    if (konamiProgress === konami.length) {
+      konamiProgress = 0;
+      konamiStartedAt = 0;
+      self.emit("easterEgg");
+    }
+  });
+
   // Buttons
   this.bindButtonPress(".retry-button", this.restart);
   this.bindButtonPress(".restart-button", this.restart);
   this.bindButtonPress(".keep-playing-button", this.keepPlaying);
   this.bindButtonPress(".undo-button", this.undo);
+  this.bindButtonPress(".restart-confirm-button", this.confirmRestart);
+  this.bindButtonPress(".restart-cancel-button", this.cancelRestart);
   this.bindButtonPress(".size-change-confirm-button", this.confirmBoardSize);
   this.bindButtonPress(".size-change-cancel-button", this.cancelBoardSize);
 
@@ -149,6 +196,32 @@ KeyboardInputManager.prototype.keepPlaying = function (event) {
 KeyboardInputManager.prototype.undo = function (event) {
   event.preventDefault();
   this.emit("undo");
+};
+
+// Normalize a keydown to the names the Konami tracker uses. keyCode is the
+// fallback for old browsers and for synthetic events without event.key.
+KeyboardInputManager.prototype.konamiKey = function (event) {
+  var key = event.key;
+  var code = event.which || event.keyCode;
+
+  if (key === "ArrowUp" || key === "Up" || code === 38) return "ArrowUp";
+  if (key === "ArrowDown" || key === "Down" || code === 40) return "ArrowDown";
+  if (key === "ArrowLeft" || key === "Left" || code === 37) return "ArrowLeft";
+  if (key === "ArrowRight" || key === "Right" || code === 39) return "ArrowRight";
+  if (code === 66) return "b";
+  if (code === 65) return "a";
+  if (key && key.length === 1) return key.toLowerCase();
+  return null;
+};
+
+KeyboardInputManager.prototype.confirmRestart = function (event) {
+  event.preventDefault();
+  this.emit("confirmRestart");
+};
+
+KeyboardInputManager.prototype.cancelRestart = function (event) {
+  event.preventDefault();
+  this.emit("cancelRestart");
 };
 
 KeyboardInputManager.prototype.confirmBoardSize = function (event) {

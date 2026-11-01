@@ -89,9 +89,9 @@ hr {
   --tile-shadow: #000000;
   --overlay-bg: rgba(238, 228, 218, 0.5);
   --overlay-won-bg: rgba(237, 194, 46, 0.5);
-  --size-change-bg: rgba(250, 248, 239, 0.7);
-  --size-change-ink: #5f554b;
-  --size-change-rule: #d8d4d0;
+  --confirm-bg: rgba(250, 248, 239, 0.7);
+  --confirm-ink: #5f554b;
+  --confirm-rule: #d8d4d0;
   --toggle-shadow: rgba(29, 52, 91, 0.18);
   --gain-ink: rgba(119, 110, 101, 0.9);
   --focus-ring: rgba(143, 122, 102, 0.4);
@@ -114,9 +114,9 @@ hr {
   --tile-shadow: rgba(0, 0, 0, 0.55);
   --overlay-bg: rgba(12, 19, 34, 0.78);
   --overlay-won-bg: rgba(29, 95, 209, 0.6);
-  --size-change-bg: rgba(12, 19, 34, 0.7);
-  --size-change-ink: #eaf2ff;
-  --size-change-rule: #2a3a55;
+  --confirm-bg: rgba(12, 19, 34, 0.7);
+  --confirm-ink: #eaf2ff;
+  --confirm-rule: #2a3a55;
   --toggle-shadow: rgba(0, 0, 0, 0.45);
   --gain-ink: #eaf2ff;
   --focus-ring: rgba(110, 168, 255, 0.45);
@@ -308,7 +308,7 @@ h1.title {
 .tile.tile-512  .tile-inner { background: #00cc66; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.39683), inset 0 0 0 1px rgba(255, 255, 255, 0.2381); font-size: calc(var(--tile-size) * 0.42); }
 .tile.tile-1024 .tile-inner { background: #0066cc; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.47619), inset 0 0 0 1px rgba(255, 255, 255, 0.28571); font-size: calc(var(--tile-size) * 0.33); }
 .tile.tile-2048 .tile-inner { background: #6600cc; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.55556), inset 0 0 0 1px rgba(255, 255, 255, 0.33333); font-size: calc(var(--tile-size) * 0.33); }
-.tile.tile-super .tile-inner { background: #cc0066; font-size: calc(var(--tile-size) * 0.28); }
+.tile.tile-super .tile-inner { background: #cc0066; box-shadow: 0 0 24px 8px rgba(243, 215, 116, 0.44444), inset 0 0 0 1px rgba(255, 255, 255, 0.26667); font-size: calc(var(--tile-size) * 0.28); }
 
 /* Night-mode tile ramp: same hue order, less glare against the dark board. */
 :root[data-theme="dark"] .tile.tile-2    .tile-inner { background: #a62929; }
@@ -525,7 +525,10 @@ h1.title {
 
 .game-area { position: relative; }
 
-.size-change-message {
+/* The Konami reveal is about 1.5s; do not let a stray click or drag race it. */
+.game-area.easter-egg-lock { pointer-events: none; }
+
+.confirm-message {
   display: none;
   position: absolute;
   top: 0;
@@ -537,8 +540,8 @@ h1.title {
   align-items: center;
   justify-content: center;
   padding: 30px;
-  background: var(--size-change-bg);
-  color: var(--size-change-ink);
+  background: var(--confirm-bg);
+  color: var(--confirm-ink);
   text-align: center;
   -webkit-animation: fade-in 300ms ease;
   -moz-animation: fade-in 300ms ease;
@@ -548,9 +551,10 @@ h1.title {
   animation-fill-mode: both;
 }
 
-.size-change-message.game-size-change { display: flex; }
+.size-change-message.game-size-change,
+.restart-confirm-message.game-restart-confirm { display: flex; }
 
-.size-change-message p {
+.confirm-message p {
   max-width: 380px;
   margin: 0;
   font-size: 32px;
@@ -558,20 +562,20 @@ h1.title {
   line-height: 1.25;
 }
 
-.size-change-message .lower {
+.confirm-message .lower {
   position: absolute;
   right: 30px;
   bottom: 30px;
   left: 30px;
 }
 
-.size-change-message a {
+.confirm-message a {
   display: inline-block;
   min-width: 44px;
   height: 40px;
   margin: 0 4px;
   padding: 0 20px;
-  border: 1px solid var(--size-change-rule);
+  border: 1px solid var(--confirm-rule);
   border-radius: 3px;
   background: var(--button-bg);
   color: var(--button-ink);
@@ -627,17 +631,30 @@ h1.title {
 }
 
 .board-size-lock {
-  display: inline-block;
+  display: inline-flex;
   width: 18px;
+  height: 20px;
   margin-right: 4px;
   vertical-align: middle;
-  font-size: 17px;
-  line-height: 20px;
-  text-align: center;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  opacity: 0.65;
 }
 
-.board-size-lock:after { content: "\1F513"; }
-.board-size-lock.locked:after { content: "\1F512"; }
+.board-size-lock.locked { opacity: 1; }
+
+/* A pair of inline SVGs rather than an emoji, so the lock looks the same on
+   every platform and matches the moon/sun toggle's line-art style. */
+.board-size-lock svg {
+  display: none;
+  width: 15px;
+  height: 15px;
+}
+
+.board-size-lock .icon-lock-open { display: block; }
+.board-size-lock.locked .icon-lock-open { display: none; }
+.board-size-lock.locked .icon-lock-closed { display: block; }
 
 .board-size-value {
   display: inline-block;
@@ -784,18 +801,18 @@ h1.title {
   }
   .game-container .game-message .lower { margin-top: 30px; }
 
-  .size-change-message { padding: 24px 18px; }
-  .size-change-message p {
+  .confirm-message { padding: 24px 18px; }
+  .confirm-message p {
     max-width: 250px;
     font-size: 26px;
     line-height: 1.2;
   }
-  .size-change-message .lower {
+  .confirm-message .lower {
     right: 18px;
     bottom: 24px;
     left: 18px;
   }
-  .size-change-message a {
+  .confirm-message a {
     min-width: 76px;
     height: 42px;
     line-height: 42px;

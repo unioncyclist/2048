@@ -16,8 +16,11 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.startTiles = 2;
 
   this.inputManager.on("move", this.move.bind(this));
-  this.inputManager.on("restart", this.restart.bind(this));
+  this.inputManager.on("restart", this.requestRestart.bind(this));
+  this.inputManager.on("confirmRestart", this.confirmRestart.bind(this));
+  this.inputManager.on("cancelRestart", this.cancelRestart.bind(this));
   this.inputManager.on("undo", this.undo.bind(this));
+  this.inputManager.on("easterEgg", this.applyEasterEgg.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
   this.inputManager.on("boardSize", this.changeSize.bind(this));
   this.inputManager.on("confirmBoardSize", this.confirmSizeChange.bind(this));
@@ -29,6 +32,9 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
 // Switch to a board of a different size. Once a move exists, changing the
 // board would destroy a game the player can still undo, so ask first.
 GameManager.prototype.changeSize = function (size) {
+  // One prompt at a time: the New Game confirmation or the egg owns the screen.
+  if (this.easterEggAnimating || this.pendingRestart) return;
+
   size = clampBoardSize(size);
   if (size === this.size) return;
 
@@ -60,6 +66,8 @@ GameManager.prototype.cancelSizeChange = function (size) {
 };
 
 GameManager.prototype.applySizeChange = function (size) {
+  this.pendingRestart = false;
+  this.actuator.clearRestartConfirmation();
   this.size = size;
   this.storageManager.setBoardSize(size);
   this.restart();
@@ -67,14 +75,27 @@ GameManager.prototype.applySizeChange = function (size) {
 
 // Start a fresh game and drop the undo history with it.
 GameManager.prototype.restart = function () {
+  if (this.easterEggTimer) {
+    window.clearTimeout(this.easterEggTimer);
+  }
+  this.easterEggTimer = null;
+  this.easterEggAnimating = false;
+  this.actuator.setEasterEggLock(false);
+
+  this.pendingRestart = false;
+  this.pendingBoardSize = undefined;
   this.storageManager.clearLastMoves();
   this.storageManager.clearGameState();
-  this.actuator.continueGame(); // Clear the game won/lost message
+  this.actuator.continueGame(); // Clear the game won/lost message and prompts
   this.setup();
 };
 
 // Step back one move by restoring the previous board from the undo history.
 GameManager.prototype.undo = function () {
+  // A confirmation or the egg reveal owns the board; U must not act behind it.
+  if (this.easterEggAnimating || this.pendingRestart ||
+      this.pendingBoardSize !== undefined) return;
+
   var data = this.storageManager.getLastMove(true);
   if (data !== null) {
     this.storageManager.setGameState(data);
@@ -83,10 +104,92 @@ GameManager.prototype.undo = function () {
   }
 };
 
+// The input entry point for New Game. Once a move exists, restarting throws
+// away a board the player can still undo, so ask first. A fresh board has
+// nothing to lose and restarts immediately.
+GameManager.prototype.requestRestart = function () {
+  // One prompt at a time, and never while the size prompt or the egg is open.
+  if (this.easterEggAnimating || this.pendingRestart ||
+      this.pendingBoardSize !== undefined) return;
+
+  if (this.storageManager.getLastMove(false) === null) {
+    this.restart();
+    return;
+  }
+
+  this.pendingRestart = true;
+  this.actuator.showRestartConfirmation();
+};
+
+GameManager.prototype.confirmRestart = function () {
+  // Idempotent: a mobile tap fires touchend and then click.
+  if (!this.pendingRestart) return;
+
+  this.pendingRestart = false;
+  this.actuator.clearRestartConfirmation();
+  this.restart();
+};
+
+GameManager.prototype.cancelRestart = function () {
+  if (!this.pendingRestart) return;
+
+  this.pendingRestart = false;
+  this.actuator.cancelRestartConfirmation(this.isGameTerminated(),
+                                          this.over, this.won);
+};
+
+// Hidden Konami egg: build the largest halving sequence that still ends at 2
+// and leaves one corner empty. One undo slot keeps the old game recoverable.
+GameManager.prototype.applyEasterEgg = function () {
+  if (this.easterEggAnimating || this.pendingRestart ||
+      this.pendingBoardSize !== undefined) return;
+
+  var size = this.grid.size;
+  var cells = size * size;
+
+  // Snapshot the board the player had before the egg.
+  this.storageManager.setLastMove(this.serialize());
+  this.storageManager.trailingUndo();
+
+  this.grid = new Grid(size);
+  for (var index = 0; index < cells - 1; index++) {
+    var row = Math.floor(index / size);
+    var column = index % size;
+    var x = (row % 2 === 0) ? column : size - 1 - column;
+    var y = size - 1 - row;
+
+    this.grid.insertTile(new Tile({ x: x, y: y },
+      Math.pow(2, cells - 1 - index)));
+  }
+
+  this.over = false;
+  this.won = false;
+  this.keepPlayingAfterWin = false;
+
+  // Lock the controls until the 1.5s reveal has finished.
+  this.easterEggAnimating = true;
+  this.actuator.setEasterEggLock(true);
+  this.actuator.continueGame();
+
+  var self = this;
+  this.easterEggTimer = window.setTimeout(function () {
+    self.finishEasterEgg();
+  }, 1500);
+
+  this.actuate(true);
+};
+
+GameManager.prototype.finishEasterEgg = function () {
+  this.easterEggAnimating = false;
+  this.easterEggTimer = null;
+  this.actuator.setEasterEggLock(false);
+};
+
 // Keep playing after winning (allows going over 2048).
 // The flag is deliberately not named `keepPlaying`: an own property would
 // shadow this very method on the instance.
 GameManager.prototype.keepPlaying = function () {
+  if (this.easterEggAnimating) return;
   this.keepPlayingAfterWin = true;
   this.actuator.continueGame(); // Clear the game won/lost message
 };
@@ -140,7 +243,7 @@ GameManager.prototype.addRandomTile = function () {
 };
 
 // Push the current state to storage and to the screen.
-GameManager.prototype.actuate = function () {
+GameManager.prototype.actuate = function (easterEgg) {
   if (this.storageManager.getBestScore() < this.score) {
     this.storageManager.setBestScore(this.score);
   }
@@ -171,7 +274,8 @@ GameManager.prototype.actuate = function () {
     over:       this.over,
     won:        this.won,
     bestScore:  this.storageManager.getBestScore(),
-    terminated: this.isGameTerminated()
+    terminated: this.isGameTerminated(),
+    easterEgg:  !!easterEgg
   });
 };
 
@@ -208,6 +312,8 @@ GameManager.prototype.moveTile = function (tile, cell) {
 GameManager.prototype.move = function (direction) {
   var self = this;
 
+  // The board is behind a New Game confirmation or the egg is still filling in.
+  if (this.pendingRestart || this.easterEggAnimating) return;
   if (this.isGameTerminated()) return; // Don't do anything if the game's over
 
   var cell, tile;
