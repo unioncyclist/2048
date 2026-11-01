@@ -1,49 +1,254 @@
 @import url(fonts/clear-sans.css);
 
 /* ------------------------------------------------------------------
+   Design tokens
+
+   Fluent 2, with the palette of the author's unioncyclist.github.io site.
+   Three layers, and colour is named only here:
+
+     1. primitives  the Fluent brand ramp, neutral steps and the gold accent
+     2. semantic    the roles every component below reads (surface /
+                    foreground / stroke / brand), one palette per theme
+     3. legacy      names the tests and older rules still use, aliased onto
+                    the semantic tokens
+
+   Nothing outside this block may name a colour: a component rule that
+   needs a new shade adds a token instead of a hex value.
+   ------------------------------------------------------------------ */
+:root {
+  /* Fluent 2 brand ramp, 10 (deepest) through 160 (palest) */
+  --brand-10: #061724;
+  --brand-20: #082338;
+  --brand-30: #0a2e4a;
+  --brand-40: #0c3b5e;
+  --brand-50: #0e4775;
+  --brand-60: #0f548c;
+  --brand-70: #115ea3;
+  --brand-80: #0f6cbd;
+  --brand-90: #2886de;
+  --brand-100: #479ef5;
+  --brand-110: #62abf5;
+  --brand-120: #77b7f7;
+  --brand-130: #96c6fa;
+  --brand-140: #b4d6fa;
+  --brand-150: #cfe4fa;
+  --brand-160: #ebf3fc;
+
+  /* Neutral steps used by the resting tiles */
+  --grey-200: #ebebeb;
+  --grey-300: #d1d1d1;
+  --grey-550: #3d3d3d;
+  --grey-600: #4a4a4a;
+  --grey-650: #5c5c5c;
+
+  /* The one warm accent: the reward ring, unchanged from the original game
+     so the "golden ring" the tests look for keeps its exact channels. */
+  --ring-super: inset 0 0 0 2px rgba(243, 215, 116, 0.9), 0 0 20px 4px rgba(243, 215, 116, 0.35);
+  --ring-2048: inset 0 0 0 2px rgba(243, 215, 116, 0.7), 0 0 16px 3px rgba(243, 215, 116, 0.25);
+
+  /* Board geometry. `--n` is set by the actuator each time the board is
+     drawn, which is what lets a single set of rules lay out 3x3 through 8x8. */
+  --board-size: 500px;
+  --board-padding: 15px;
+  --tile-gap: 14px;
+
+  /* Shape, motion, elevation — the site's own Fluent tokens */
+  --radius-control: 4px;
+  --radius-card: 8px;
+  --radius-panel: 12px;
+  --dur-fast: 100ms;
+  --dur-normal: 200ms;
+  --dur-slow: 320ms;
+  --ease-standard: cubic-bezier(0.33, 0, 0.67, 1);
+  --ease-decel: cubic-bezier(0.1, 0.9, 0.2, 1);
+  --shadow-2: 0 0 2px rgb(0 0 0 / 12%), 0 1px 2px rgb(0 0 0 / 14%);
+  --shadow-4: 0 0 2px rgb(0 0 0 / 12%), 0 2px 4px rgb(0 0 0 / 14%);
+  --shadow-8: 0 0 2px rgb(0 0 0 / 12%), 0 4px 8px rgb(0 0 0 / 14%);
+
+  /* Type. Segoe UI Variable where the platform has it, system UI next, and
+     the bundled Clear Sans last so a machine without Segoe still gets a
+     humanist sans rather than Times. The webfont loads only if it is used. */
+  --font-body: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+    "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "Clear Sans", Arial,
+    sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI Variable Text", "Segoe UI",
+    system-ui, -apple-system, "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei",
+    "Clear Sans", Arial, sans-serif;
+
+  /* Semantic — light theme */
+  --bg-canvas: #f3f3f3;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f5f5f5;
+  --bg-subtle-hover: #ebebeb;
+  --bg-acrylic: rgba(255, 255, 255, 0.7);
+
+  --fg-1: #242424;
+  --fg-2: #424242;
+  --fg-3: #616161;
+  --fg-disabled: #9e9e9e;
+
+  --stroke-1: #e0e0e0;
+  --stroke-2: #d1d1d1;
+
+  --brand: #0f6cbd;
+  --brand-hover: #115ea3;
+  --brand-pressed: #0c3b5e;
+  --brand-bg: #0f6cbd;
+  --brand-bg-hover: #115ea3;
+  --brand-bg-pressed: #0c3b5e;
+  --on-brand: #ffffff;
+  --brand-tint: #ebf3fc;
+  --brand-tint-strong: #d7e8f9;
+
+  --focus: #0f6cbd;
+  --success: #0f7b0f;
+  --selection-bg: #efd9a6;
+  --selection-ink: #1f1f1f;
+  --glow-1: rgba(15, 108, 189, 0.13);
+  --glow-2: rgba(94, 177, 255, 0.11);
+
+  /* Legacy names. Kept because the test suite and a few rules refer to them;
+     each one now points at a semantic token rather than its own value. */
+  --page-bg: var(--bg-canvas);
+  --ink: var(--fg-1);
+  --rule: var(--stroke-1);
+  --board-bg: var(--bg-surface);
+  --cell-bg: var(--bg-subtle);
+  --button-bg: var(--brand-bg);
+  --button-ink: var(--on-brand);
+  --box-bg: var(--bg-surface);
+  --box-label: var(--fg-3);
+  --tile-ink: #ffffff;
+  --tile-shadow: rgba(0, 0, 0, 0.18);
+  --overlay-bg: rgba(243, 243, 243, 0.72);
+  --overlay-won-bg: rgba(15, 108, 189, 0.28);
+  --confirm-bg: rgba(255, 255, 255, 0.7);
+  --confirm-ink: var(--fg-1);
+  --confirm-rule: var(--stroke-2);
+  --gain-ink: var(--brand);
+  --toggle-shadow: var(--shadow-4);
+  --focus-ring: var(--focus);
+
+  color-scheme: light;
+}
+
+/* Semantic — night theme. Same roles, the site's dark palette. */
+:root[data-theme="dark"] {
+  --bg-canvas: #141414;
+  --bg-surface: #242424;
+  --bg-subtle: #2e2e2e;
+  --bg-subtle-hover: #383838;
+  --bg-acrylic: rgba(30, 30, 30, 0.72);
+
+  --fg-1: #ffffff;
+  --fg-2: #d6d6d6;
+  --fg-3: #adadad;
+  --fg-disabled: #6e6e6e;
+
+  --stroke-1: #3d3d3d;
+  --stroke-2: #525252;
+
+  --brand: #479ef5;
+  --brand-hover: #62abf5;
+  --brand-pressed: #2886de;
+  --brand-bg: #115ea3;
+  --brand-bg-hover: #0f6cbd;
+  --brand-bg-pressed: #0c3b5e;
+  --on-brand: #ffffff;
+  --brand-tint: #0b2b45;
+  --brand-tint-strong: #0f3d5e;
+
+  --focus: #62abf5;
+  --success: #54b054;
+  --selection-bg: #5c4713;
+  --selection-ink: #ffffff;
+  --glow-1: rgba(71, 158, 245, 0.18);
+  --glow-2: rgba(15, 108, 189, 0.22);
+
+  --board-bg: var(--bg-surface);
+  --cell-bg: var(--bg-subtle);
+  --box-bg: var(--bg-surface);
+  --box-label: var(--fg-3);
+  --tile-shadow: rgba(0, 0, 0, 0.45);
+  --overlay-bg: rgba(20, 20, 20, 0.78);
+  --overlay-won-bg: rgba(71, 158, 245, 0.24);
+  --confirm-bg: rgba(36, 36, 36, 0.7);
+  --confirm-rule: var(--stroke-2);
+
+  --shadow-2: 0 0 2px rgb(0 0 0 / 40%), 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-4: 0 0 2px rgb(0 0 0 / 40%), 0 2px 4px rgb(0 0 0 / 30%);
+  --shadow-8: 0 0 2px rgb(0 0 0 / 40%), 0 4px 8px rgb(0 0 0 / 30%);
+
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------
    Base
    ------------------------------------------------------------------ */
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--page-bg);
-  color: var(--ink);
-  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
-  font-size: 18px;
+  color: var(--fg-1);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* The mica layer: two soft brand glows over the canvas, in both themes. It
+   lives on <html> so it stays continuous through the body's margins. */
+html {
+  min-height: 100%;
+  background-color: var(--bg-canvas);
+  background-image:
+    radial-gradient(58rem 40rem at 12% -14%, var(--glow-1), transparent 76%),
+    radial-gradient(48rem 36rem at 88% -8%, var(--glow-2), transparent 78%);
+  background-attachment: fixed;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  margin: 80px 0;
+  margin: 48px 0 64px;
   background: transparent;
-  transition: color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: color var(--dur-normal) var(--ease-standard);
 }
 
 p {
   margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   line-height: 1.65;
 }
 
 a {
-  color: var(--ink);
-  font-weight: bold;
+  color: var(--brand);
+  font-weight: 600;
   text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
+}
+
+a:hover {
+  color: var(--brand-hover);
 }
 
 strong.important {
   text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 h2 {
-  margin: 30px 0 10px;
-  font-size: 20px;
+  margin: 32px 0 8px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
   line-height: 1.3;
 }
 
 ol, ul {
   margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   padding-left: 22px;
   line-height: 1.65;
 }
@@ -54,132 +259,85 @@ ol li, ul li {
 
 hr {
   border: none;
-  border-bottom: 1px solid var(--rule);
-  margin-top: 20px;
-  margin-bottom: 30px;
+  border-bottom: 1px solid var(--stroke-1);
+  margin-top: 24px;
+  margin-bottom: 32px;
 }
 
-/* ------------------------------------------------------------------
-   Board geometry
-
-   The board is square and its cell count is adjustable, so no size below is
-   hard-coded: everything is derived from how wide the board is and how much
-   space sits between the cells. `--n` is the cell count and is set by the
-   actuator each time the board is drawn, which is what lets a single set of
-   rules lay out 3x3 through 8x8.
-   ------------------------------------------------------------------ */
-:root {
-  --board-size: 500px;
-  --board-padding: 15px;
-  --tile-gap: 14px;
-
-  /* Every colour on the page comes from here, so night mode is nothing but a
-     second set of values on <html data-theme="dark">. Nothing below hard-codes
-     a colour. */
-  --page-bg: #faf8ef;
-  --ink: #776e65;
-  --rule: #d8d4d0;
-  --board-bg: #8f7a66;
-  --cell-bg: #bbada0;
-  --button-bg: #8f7a66;
-  --button-ink: #f9f6f2;
-  --box-bg: #bbada0;
-  --box-label: #eee4da;
-  --tile-ink: #f9f6f2;
-  --tile-shadow: #000000;
-  --overlay-bg: rgba(238, 228, 218, 0.5);
-  --overlay-won-bg: rgba(237, 194, 46, 0.5);
-  --confirm-bg: rgba(250, 248, 239, 0.7);
-  --confirm-ink: #5f554b;
-  --confirm-rule: #d8d4d0;
-  --toggle-shadow: rgba(29, 52, 91, 0.18);
-  --gain-ink: rgba(119, 110, 101, 0.9);
-  --focus-ring: rgba(143, 122, 102, 0.4);
-  color-scheme: light;
+::selection {
+  color: var(--selection-ink);
+  background: var(--selection-bg);
 }
 
-/* Night mode. Values follow the dark palette of the portfolio site, so the
-   game and that page read as the same product. */
-:root[data-theme="dark"] {
-  --page-bg: #0c1322;
-  --ink: #e6edf7;
-  --rule: #2a3a55;
-  --board-bg: #151e2e;
-  --cell-bg: #22304a;
-  --button-bg: #26417a;
-  --button-ink: #eaf2ff;
-  --box-bg: #22304a;
-  --box-label: #94a3b8;
-  --tile-ink: #f9f6f2;
-  --tile-shadow: rgba(0, 0, 0, 0.55);
-  --overlay-bg: rgba(12, 19, 34, 0.78);
-  --overlay-won-bg: rgba(29, 95, 209, 0.6);
-  --confirm-bg: rgba(12, 19, 34, 0.7);
-  --confirm-ink: #eaf2ff;
-  --confirm-rule: #2a3a55;
-  --toggle-shadow: rgba(0, 0, 0, 0.45);
-  --gain-ink: #eaf2ff;
-  --focus-ring: rgba(110, 168, 255, 0.45);
-  color-scheme: dark;
-
-  /* The glow belongs to the root layer so it remains continuous through the
-     body's top and bottom margins. */
-  background:
-    radial-gradient(circle at top left, #1b2c4d 0, transparent 34rem),
-    var(--page-bg);
+/* Fluent puts the focus ring on the keyboard, not on every click. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
 }
 
 .container {
   width: var(--board-size);
+  max-width: 100%;
   margin: 0 auto;
 }
 
 /* ------------------------------------------------------------------
    Heading
    ------------------------------------------------------------------ */
-.heading:after {
-  content: "";
-  display: block;
-  clear: both;
+.heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
 }
 
 h1.title {
-  font-size: 80px;
-  font-weight: bold;
   margin: 0;
-  display: block;
-  float: left;
+  font-family: var(--font-display);
+  font-size: 80px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
 }
 
 .scores-container {
-  float: right;
-  text-align: right;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
 }
 
+/* A Fluent surface card. The label is generated as ::after but the card is a
+   column in reverse, so the label lands above the number without new markup. */
 .score-container, .best-container {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-sizing: border-box;
+  min-width: 88px;
+  height: 56px;
+  padding: 4px 16px;
   background: var(--box-bg);
-  padding: 15px 25px;
-  font-size: 25px;
-  height: 25px;
-  line-height: 47px;
-  font-weight: bold;
-  border-radius: 3px;
-  color: white;
-  margin-top: 8px;
+  border-radius: var(--radius-card);
+  box-shadow: inset 0 0 0 1px var(--stroke-1), var(--shadow-2);
+  color: var(--fg-1);
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
   text-align: center;
 }
 
 .score-container:after, .best-container:after {
-  position: absolute;
-  width: 100%;
-  top: 10px;
-  left: 0;
   text-transform: uppercase;
-  font-size: 13px;
-  line-height: 13px;
-  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.06em;
   color: var(--box-label);
 }
 
@@ -189,9 +347,10 @@ h1.title {
 .score-container .score-addition, .best-container .score-addition {
   position: absolute;
   right: 30px;
+  top: 25px;
   font-size: 25px;
   line-height: 25px;
-  font-weight: bold;
+  font-weight: 600;
   color: var(--gain-ink);
   z-index: 100;
   -webkit-animation: move-up 600ms ease-in;
@@ -226,7 +385,7 @@ h1.title {
   --tile-size: calc((var(--board-inner) - (var(--n) - 1) * var(--tile-gap)) / var(--n));
   --tile-pitch: calc(var(--tile-size) + var(--tile-gap));
 
-  margin-top: 40px;
+  margin-top: 32px;
   position: relative;
   padding: var(--board-padding);
   cursor: default;
@@ -237,7 +396,10 @@ h1.title {
   -ms-user-select: none;
   touch-action: none;
   background: var(--board-bg);
-  border-radius: 6px;
+  /* The edge is an inset ring, never a border: a border would shrink the
+     content box and the board geometry is measured against it. */
+  border-radius: var(--radius-panel);
+  box-shadow: inset 0 0 0 1px var(--stroke-1), var(--shadow-8);
   width: var(--board-size);
   height: var(--board-size);
   -webkit-box-sizing: border-box;
@@ -257,7 +419,7 @@ h1.title {
 }
 
 .grid-cell {
-  border-radius: 3px;
+  border-radius: var(--radius-control);
   background: var(--cell-bg);
 }
 
@@ -277,9 +439,9 @@ h1.title {
 
 .tile {
   position: absolute;
-  -webkit-transition: 100ms ease-in-out;
-  -moz-transition: 100ms ease-in-out;
-  transition: 100ms ease-in-out;
+  -webkit-transition: var(--dur-fast) var(--ease-standard);
+  -moz-transition: var(--dur-fast) var(--ease-standard);
+  transition: var(--dur-fast) var(--ease-standard);
   -webkit-transition-property: -webkit-transform;
   -moz-transition-property: -moz-transform;
   transition-property: transform;
@@ -288,41 +450,52 @@ h1.title {
 /* Type scales with the tile, so the same rules read correctly on a cramped
    8x8 board and a roomy 3x3 one. */
 .tile .tile-inner {
-  border-radius: 3px;
+  border-radius: var(--radius-control);
   text-align: center;
-  font-weight: bold;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   z-index: 10;
   font-size: calc(var(--tile-size) * 0.51);
-  text-shadow: 2px 2px 4px var(--tile-shadow);
+  text-shadow: 0 1px 2px var(--tile-shadow);
   color: var(--tile-ink);
 }
 
-.tile.tile-2    .tile-inner { background: #cc0000; }
-.tile.tile-4    .tile-inner { background: #cccc00; }
-.tile.tile-8    .tile-inner { background: #00cc00; }
-.tile.tile-16   .tile-inner { background: #00cccc; }
-.tile.tile-32   .tile-inner { background: #0000cc; }
-.tile.tile-64   .tile-inner { background: #cc00cc; }
-.tile.tile-128  .tile-inner { background: #cc6600; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.2381), inset 0 0 0 1px rgba(255, 255, 255, 0.14286); font-size: calc(var(--tile-size) * 0.42); }
-.tile.tile-256  .tile-inner { background: #66cc00; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.31746), inset 0 0 0 1px rgba(255, 255, 255, 0.19048); font-size: calc(var(--tile-size) * 0.42); }
-.tile.tile-512  .tile-inner { background: #00cc66; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.39683), inset 0 0 0 1px rgba(255, 255, 255, 0.2381); font-size: calc(var(--tile-size) * 0.42); }
-.tile.tile-1024 .tile-inner { background: #0066cc; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.47619), inset 0 0 0 1px rgba(255, 255, 255, 0.28571); font-size: calc(var(--tile-size) * 0.33); }
-.tile.tile-2048 .tile-inner { background: #6600cc; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.55556), inset 0 0 0 1px rgba(255, 255, 255, 0.33333); font-size: calc(var(--tile-size) * 0.33); }
-.tile.tile-super .tile-inner { background: #cc0066; box-shadow: 0 0 24px 8px rgba(243, 215, 116, 0.44444), inset 0 0 0 1px rgba(255, 255, 255, 0.26667); font-size: calc(var(--tile-size) * 0.28); }
+/* Tile ramp. A neutral-to-brand climb: the small values rest on Fluent
+   surfaces, everything from 16 up gains brand presence, and 2048 and above
+   carry the single warm accent the palette reserves for a reward. Text ink
+   flips from near-black to white once the ramp reaches brand-80; every pair
+   below clears 4.5:1. */
+.tile.tile-2    .tile-inner { background: var(--bg-surface); color: var(--fg-1); box-shadow: inset 0 0 0 1px var(--stroke-2); }
+.tile.tile-4    .tile-inner { background: var(--grey-200); color: var(--fg-1); }
+.tile.tile-8    .tile-inner { background: var(--grey-300); color: var(--fg-1); }
+.tile.tile-16   .tile-inner { background: var(--brand-140); color: var(--brand-20); }
+.tile.tile-32   .tile-inner { background: var(--brand-130); color: var(--brand-20); }
+.tile.tile-64   .tile-inner { background: var(--brand-120); color: var(--brand-10); }
+.tile.tile-128  .tile-inner { background: var(--brand-100); color: var(--brand-10); font-size: calc(var(--tile-size) * 0.42); }
+.tile.tile-256  .tile-inner { background: var(--brand-90); color: var(--brand-10); font-size: calc(var(--tile-size) * 0.42); }
+.tile.tile-512  .tile-inner { background: var(--brand-80); color: var(--on-brand); font-size: calc(var(--tile-size) * 0.42); }
+.tile.tile-1024 .tile-inner { background: var(--brand-70); color: var(--on-brand); font-size: calc(var(--tile-size) * 0.33); }
+.tile.tile-2048 .tile-inner { background: var(--brand-60); color: var(--on-brand); box-shadow: var(--ring-2048); font-size: calc(var(--tile-size) * 0.33); }
+.tile.tile-super .tile-inner { background: var(--brand-40); color: var(--on-brand); font-size: calc(var(--tile-size) * 0.28); box-shadow: var(--ring-super); }
 
-/* Night-mode tile ramp: same hue order, less glare against the dark board. */
-:root[data-theme="dark"] .tile.tile-2    .tile-inner { background: #a62929; }
-:root[data-theme="dark"] .tile.tile-4    .tile-inner { background: #a3a32c; }
-:root[data-theme="dark"] .tile.tile-8    .tile-inner { background: #2a9d4a; }
-:root[data-theme="dark"] .tile.tile-16   .tile-inner { background: #2a9ba8; }
-:root[data-theme="dark"] .tile.tile-32   .tile-inner { background: #2f4bb5; }
-:root[data-theme="dark"] .tile.tile-64   .tile-inner { background: #a52f9c; }
-:root[data-theme="dark"] .tile.tile-128  .tile-inner { background: #a8641f; }
-:root[data-theme="dark"] .tile.tile-256  .tile-inner { background: #5f9c2a; }
-:root[data-theme="dark"] .tile.tile-512  .tile-inner { background: #1f9c72; }
-:root[data-theme="dark"] .tile.tile-1024 .tile-inner { background: #2a6ba8; }
-:root[data-theme="dark"] .tile.tile-2048 .tile-inner { background: #6a3fb5; }
-:root[data-theme="dark"] .tile.tile-super .tile-inner { background: #b53f7a; }
+/* Night-mode tile ramp: the same climb read the other way — the higher the
+   value the brighter the tile — plus resting tiles that stay above the empty
+   cell instead of disappearing into it. These rules override background and
+   ink only; the ring stays in the base rules above, which is what keeps it
+   alive in night mode. */
+:root[data-theme="dark"] .tile.tile-2    .tile-inner { background: var(--grey-550); color: var(--fg-1); }
+:root[data-theme="dark"] .tile.tile-4    .tile-inner { background: var(--grey-600); color: var(--fg-1); }
+:root[data-theme="dark"] .tile.tile-8    .tile-inner { background: var(--grey-650); color: var(--fg-1); }
+:root[data-theme="dark"] .tile.tile-16   .tile-inner { background: var(--brand-40); color: var(--brand-160); }
+:root[data-theme="dark"] .tile.tile-32   .tile-inner { background: var(--brand-50); color: var(--on-brand); }
+:root[data-theme="dark"] .tile.tile-64   .tile-inner { background: var(--brand-70); color: var(--on-brand); }
+:root[data-theme="dark"] .tile.tile-128  .tile-inner { background: var(--brand-80); color: var(--on-brand); }
+:root[data-theme="dark"] .tile.tile-256  .tile-inner { background: var(--brand-90); color: var(--brand-10); }
+:root[data-theme="dark"] .tile.tile-512  .tile-inner { background: var(--brand-100); color: var(--brand-10); }
+:root[data-theme="dark"] .tile.tile-1024 .tile-inner { background: var(--brand-110); color: var(--brand-10); }
+:root[data-theme="dark"] .tile.tile-2048 .tile-inner { background: var(--brand-120); color: var(--brand-10); }
+:root[data-theme="dark"] .tile.tile-super .tile-inner { background: var(--brand-130); color: var(--brand-10); }
 
 /* Cell positions, 1-based. The transform is a multiple of the pitch, so the
    slide transition works the same at any board size. */
@@ -468,7 +641,9 @@ h1.title {
   0%   { opacity: 0; }
   100% { opacity: 1; }
 }
-
+/* ------------------------------------------------------------------
+   Game over / win overlay
+   ------------------------------------------------------------------ */
 .game-container .game-message {
   display: none;
   position: absolute;
@@ -477,22 +652,28 @@ h1.title {
   bottom: 0;
   left: 0;
   background: var(--overlay-bg);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-radius: var(--radius-panel);
   z-index: 100;
   text-align: center;
-  -webkit-animation: fade-in 300ms ease;
-  -moz-animation: fade-in 300ms ease;
-  animation: fade-in 300ms ease;
+  -webkit-animation: fade-in 300ms var(--ease-standard);
+  -moz-animation: fade-in 300ms var(--ease-standard);
+  animation: fade-in 300ms var(--ease-standard);
   -webkit-animation-fill-mode: both;
   -moz-animation-fill-mode: both;
   animation-fill-mode: both;
 }
 
 .game-container .game-message p {
+  font-family: var(--font-display);
   font-size: 60px;
-  font-weight: bold;
+  font-weight: 600;
   height: 60px;
   line-height: 60px;
+  letter-spacing: -0.03em;
   margin-top: 222px;
+  color: var(--fg-1);
 }
 
 .game-container .game-message .lower {
@@ -502,32 +683,52 @@ h1.title {
 
 .game-container .game-message a {
   display: inline-block;
-  background: var(--button-bg);
-  border-radius: 3px;
+  min-height: 40px;
+  background: var(--brand-bg);
+  border-radius: var(--radius-control);
   padding: 0 20px;
   text-decoration: none;
-  color: var(--button-ink);
-  height: 40px;
-  line-height: 42px;
-  margin-left: 9px;
+  color: var(--on-brand);
+  font-weight: 600;
+  line-height: 40px;
+  margin-left: 8px;
+  box-shadow: var(--shadow-2);
+  transition: background var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
 }
+
+.game-container .game-message a:hover { background: var(--brand-bg-hover); }
+.game-container .game-message a:active { background: var(--brand-bg-pressed); transform: translateY(1px); }
 
 .game-container .game-message a.keep-playing-button { display: none; }
 
 .game-container .game-message.game-won {
   background: var(--overlay-won-bg);
-  color: var(--button-ink);
+  color: var(--fg-1);
 }
 .game-container .game-message.game-won a.keep-playing-button { display: inline-block; }
 
 .game-container .game-message.game-won,
 .game-container .game-message.game-over { display: block; }
 
+/* Both actions are offered after a win, so the second one steps back to the
+   resting surface and leaves Keep going as the primary choice. */
+.game-container .game-message.game-won .retry-button {
+  background: var(--bg-surface);
+  color: var(--fg-1);
+  box-shadow: inset 0 0 0 1px var(--stroke-2), var(--shadow-2);
+}
+.game-container .game-message.game-won .retry-button:hover { background: var(--bg-subtle); }
+.game-container .game-message.game-won .retry-button:active { background: var(--bg-subtle-hover); }
+
 .game-area { position: relative; }
 
 /* The Konami reveal is about 1.5s; do not let a stray click or drag race it. */
 .game-area.easter-egg-lock { pointer-events: none; }
 
+/* Both destructive controls ask through this layer: an acrylic dialog over the
+   game area, with the confirm action as the primary button. `--confirm-bg` is
+   deliberately 70% opaque — the mobile suite measures that alpha. */
 .confirm-message {
   display: none;
   position: absolute;
@@ -541,11 +742,18 @@ h1.title {
   justify-content: center;
   padding: 30px;
   background: var(--confirm-bg);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-panel);
+  /* The acrylic is 70% by design, so the edge carries the definition: a token
+     stroke instead of an opaque background keeps the alpha the mobile suite
+     measures. */
+  box-shadow: inset 0 0 0 1px var(--stroke-1);
   color: var(--confirm-ink);
   text-align: center;
-  -webkit-animation: fade-in 300ms ease;
-  -moz-animation: fade-in 300ms ease;
-  animation: fade-in 300ms ease;
+  -webkit-animation: fade-in 300ms var(--ease-standard);
+  -moz-animation: fade-in 300ms var(--ease-standard);
+  animation: fade-in 300ms var(--ease-standard);
   -webkit-animation-fill-mode: both;
   -moz-animation-fill-mode: both;
   animation-fill-mode: both;
@@ -557,9 +765,11 @@ h1.title {
 .confirm-message p {
   max-width: 380px;
   margin: 0;
-  font-size: 32px;
-  font-weight: bold;
-  line-height: 1.25;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
 }
 
 .confirm-message .lower {
@@ -576,13 +786,36 @@ h1.title {
   margin: 0 4px;
   padding: 0 20px;
   border: 1px solid var(--confirm-rule);
-  border-radius: 3px;
-  background: var(--button-bg);
-  color: var(--button-ink);
-  font-weight: bold;
-  line-height: 40px;
+  border-radius: var(--radius-control);
+  background: var(--bg-surface);
+  color: var(--fg-1);
+  font-weight: 600;
+  line-height: 38px;
   text-decoration: none;
+  box-shadow: var(--shadow-2);
+  transition: background var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
 }
+
+.confirm-message a:hover { background: var(--bg-subtle); }
+.confirm-message a:active { background: var(--bg-subtle-hover); transform: translateY(1px); }
+
+/* OK commits the destructive action, so it is the primary button; Cancel
+   keeps the resting style above. */
+.confirm-message .size-change-confirm-button,
+.confirm-message .restart-confirm-button {
+  border-color: transparent;
+  background: var(--brand-bg);
+  color: var(--on-brand);
+  line-height: 40px;
+}
+
+.confirm-message .size-change-confirm-button:hover,
+.confirm-message .restart-confirm-button:hover { background: var(--brand-bg-hover); }
+
+.confirm-message .size-change-confirm-button:active,
+.confirm-message .restart-confirm-button:active { background: var(--brand-bg-pressed); }
 
 /* ------------------------------------------------------------------
    Buttons
@@ -593,36 +826,68 @@ h1.title {
   clear: both;
 }
 
+/* Still floats: how.html reuses this block for a single back link, and a flex
+   row would move that link to the right edge. */
 .restart-button {
   display: block;
   float: right;
+  box-sizing: border-box;
   background: var(--button-bg);
-  border-radius: 3px;
+  border-radius: var(--radius-control);
   padding: 0 20px;
   text-decoration: none;
   color: var(--button-ink);
+  font-weight: 600;
   height: 40px;
-  line-height: 42px;
+  line-height: 40px;
   text-align: center;
   margin-right: 5px;
+  box-shadow: var(--shadow-2);
+  transition: background var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
 }
 
-.undo-button { margin-right: 5px; }
+.restart-button:hover { background: var(--brand-bg-hover); }
+.restart-button:active { background: var(--brand-bg-pressed); transform: translateY(1px); }
 
-.disabled { background: var(--cell-bg); }
+/* Undo is the secondary action: a resting surface with a stroke. */
+.undo-button {
+  margin-right: 8px;
+  background: var(--bg-surface);
+  color: var(--fg-1);
+  box-shadow: inset 0 0 0 1px var(--stroke-2), var(--shadow-2);
+}
+
+.undo-button:hover { background: var(--bg-subtle); }
+.undo-button:active { background: var(--bg-subtle-hover); }
+
+/* Declared last so it wins over the two variants above. */
+.restart-button.disabled,
+.restart-button.disabled:hover,
+.restart-button.disabled:active {
+  background: var(--bg-subtle);
+  color: var(--fg-disabled);
+  box-shadow: none;
+  transform: none;
+  cursor: default;
+}
 
 /* ------------------------------------------------------------------
    Board size slider
    ------------------------------------------------------------------ */
 .board-size {
   clear: both;
-  padding-top: 10px;
-  text-align: right;
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  font-size: 12px;
   line-height: 20px;
-  font-weight: bold;
+  font-weight: 600;
   text-transform: uppercase;
-  color: var(--ink);
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
 }
 
 .board-size label {
@@ -634,15 +899,13 @@ h1.title {
   display: inline-flex;
   width: 18px;
   height: 20px;
-  margin-right: 4px;
   vertical-align: middle;
   align-items: center;
   justify-content: center;
-  color: var(--ink);
-  opacity: 0.65;
+  color: var(--fg-3);
 }
 
-.board-size-lock.locked { opacity: 1; }
+.board-size-lock.locked { color: var(--brand); }
 
 /* A pair of inline SVGs rather than an emoji, so the lock looks the same on
    every platform and matches the moon/sun toggle's line-art style. */
@@ -661,7 +924,9 @@ h1.title {
   min-width: 36px;
   text-align: right;
   vertical-align: middle;
-  font-size: 15px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-2);
 }
 
 .board-size-slider {
@@ -669,13 +934,12 @@ h1.title {
   appearance: none;
   vertical-align: middle;
   width: 120px;
-  height: 6px;
-  margin: 0 10px;
+  height: 4px;
+  margin: 0 4px;
   padding: 0;
   border: none;
-  border-radius: 3px;
-  background: var(--cell-bg);
-  outline: none;
+  border-radius: 2px;
+  background: var(--bg-subtle-hover);
   cursor: pointer;
 }
 
@@ -684,57 +948,66 @@ h1.title {
   appearance: none;
   width: 18px;
   height: 18px;
-  border: none;
+  border: 2px solid var(--bg-surface);
   border-radius: 50%;
-  background: var(--board-bg);
+  background: var(--brand-bg);
+  box-shadow: var(--shadow-2);
   cursor: pointer;
 }
 
 .board-size-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
-  border: none;
+  border: 2px solid var(--bg-surface);
   border-radius: 50%;
-  background: var(--board-bg);
+  background: var(--brand-bg);
+  box-shadow: var(--shadow-2);
   cursor: pointer;
 }
 
-.board-size-slider:focus::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--focus-ring); }
-.board-size-slider:focus::-moz-range-thumb     { box-shadow: 0 0 0 3px var(--focus-ring); }
+.board-size-slider:focus-visible { outline-offset: 4px; }
 
 /* ------------------------------------------------------------------
    Night mode toggle
 
-   Lifted from the portfolio site: a fixed round button above everything,
-   swapping a moon for a sun. The icons are inline SVG, so the two visible
-   icons here are the only ones that need to exist.
+   Lifted from the portfolio site: a floating button above everything, in the
+   brand tint, swapping a moon for a sun. The icons are inline SVG, so the two
+   visible icons here are the only ones that need to exist.
    ------------------------------------------------------------------ */
 .theme-toggle {
   position: fixed;
-  top: 1.1rem;
-  right: 1.1rem;
+  top: 16px;
+  right: 16px;
   z-index: 100;
-  display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  place-items: center;
-  border: 1px solid var(--rule);
-  border-radius: 50%;
-  color: var(--ink);
-  background: var(--page-bg);
-  box-shadow: 0 0.5rem 1.5rem var(--toggle-shadow);
+  border: 1px solid var(--brand-tint-strong);
+  border-radius: var(--radius-card);
+  color: var(--brand);
+  background: var(--brand-tint);
+  box-shadow: var(--shadow-2);
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.25s ease, color 0.25s ease;
+  transition: background var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
 }
 
 .theme-toggle:hover {
-  transform: translateY(-2px);
+  background: var(--brand-tint-strong);
+  border-color: var(--brand);
+}
+
+.theme-toggle:active {
+  transform: translateY(1px);
 }
 
 .theme-toggle svg {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 18px;
+  height: 18px;
 }
 
 .theme-toggle .icon-sun { display: none; }
@@ -742,17 +1015,27 @@ h1.title {
 :root[data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
 :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 
-.game-explanation { margin-top: 50px; }
+.game-explanation {
+  margin-top: 48px;
+  color: var(--fg-2);
+  font-size: 15px;
+}
+
+.game-explanation strong { color: var(--fg-1); }
 
 /* ------------------------------------------------------------------
    Mobile
    ------------------------------------------------------------------ */
 @media screen and (max-width: 520px) {
+  /* On a narrow screen the column fills the viewport, so a fixed top-right
+     button would sit on top of New Game. The top-left corner is empty there:
+     the heading starts a row lower, and the buttons float right. */
   .theme-toggle {
-    top: 0.6rem;
-    right: 0.6rem;
-    width: 2.25rem;
-    height: 2.25rem;
+    top: 12px;
+    right: auto;
+    left: 12px;
+    width: 36px;
+    height: 36px;
   }
 
   :root {
@@ -764,22 +1047,29 @@ h1.title {
   html, body { font-size: 15px; }
 
   body {
-    margin: 20px 0;
+    margin: 24px 0 40px;
     padding: 0 20px;
   }
 
+  .heading { gap: 12px; }
+
   h1.title {
-    font-size: 27px;
-    margin-top: 15px;
+    font-size: 36px;
+    margin-top: 12px;
   }
+
+  .scores-container { gap: 6px; }
 
   .score-container, .best-container {
-    margin-top: 0;
-    padding: 15px 10px;
-    min-width: 40px;
+    min-width: 76px;
+    height: 52px;
+    padding: 4px 10px;
+    font-size: 20px;
   }
 
-  .heading { margin-bottom: 10px; }
+  .score-container:after, .best-container:after { font-size: 10px; }
+
+  .heading { margin-bottom: 8px; }
 
   .restart-button {
     width: 42%;
@@ -789,9 +1079,10 @@ h1.title {
     margin-top: 2px;
   }
 
-  .game-container { margin-top: 17px; }
+  .game-container { margin-top: 16px; }
 
-  .board-size-slider { width: 90px; margin: 0 6px; }
+  .board-size { gap: 6px; }
+  .board-size-slider { width: 90px; margin: 0 2px; }
 
   .game-container .game-message p {
     font-size: 30px;
@@ -804,8 +1095,8 @@ h1.title {
   .confirm-message { padding: 24px 18px; }
   .confirm-message p {
     max-width: 250px;
-    font-size: 26px;
-    line-height: 1.2;
+    font-size: 24px;
+    line-height: 1.25;
   }
   .confirm-message .lower {
     right: 18px;
@@ -815,6 +1106,34 @@ h1.title {
   .confirm-message a {
     min-width: 76px;
     height: 42px;
-    line-height: 42px;
+    line-height: 40px;
+  }
+  .confirm-message .size-change-confirm-button,
+  .confirm-message .restart-confirm-button { line-height: 42px; }
+}
+
+/* ------------------------------------------------------------------
+   Reduced motion
+
+   Remove the movement, keep the fades: sliding tiles, the merge pop, the
+   rising score gain and the Konami cascade are the vestibular part, so a
+   player who asked for less motion sees the new board state immediately.
+   Opacity transitions stay — a fade is not motion — which is also why the
+   overlay's 300ms fade is untouched.
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    -webkit-transition: none;
+    -moz-transition: none;
+    transition: none;
+  }
+
+  .tile-new .tile-inner,
+  .tile-merged .tile-inner,
+  .score-container .score-addition,
+  .best-container .score-addition {
+    -webkit-animation: none;
+    -moz-animation: none;
+    animation: none;
   }
 }
