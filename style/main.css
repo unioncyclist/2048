@@ -453,6 +453,26 @@ hr {
   opacity: 0.8;
 }
 
+/* The page links' second home: under the page text, shown only when the bar
+   has no room for them. On wide screens the header nav keeps them, so this
+   copy is hidden. Only one of the two navs is ever displayed. */
+.footer-nav {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--stroke-1);
+}
+
+/* Touch-sized in the footer, unlike the in-bar links. */
+.footer-nav .nav-link {
+  height: 40px;
+  padding: 0 4px;
+  font-size: 14px;
+}
+
 /* Undo and New Game share one line on the right of the bar. */
 .appbar-actions {
   display: flex;
@@ -1244,49 +1264,48 @@ hr {
 /* ------------------------------------------------------------------
    Narrow layouts
 
-   Two steps. The bar wraps as soon as its single row would overflow (it needs
-   about 930px of content), and the board only shrinks once the 500px column
-   no longer fits a phone screen.
+   Two steps. Below 720px the bar loses the page links and becomes one row:
+   the links move into the footer nav under the page text. A full bar needs
+   about 670px, so 720px leaves a little slack and lets 721px-plus keep the
+   desktop bar in one row. The board only shrinks once the 500px column no
+   longer fits a phone screen.
    ------------------------------------------------------------------ */
-@media screen and (max-width: 960px) {
+@media screen and (max-width: 720px) {
   .appbar-inner {
-    flex-wrap: wrap;
     gap: 8px;
     padding: 8px 16px;
   }
 
   .brand { order: 1; }
 
-  .theme-toggle {
+  .appbar-actions {
     order: 2;
     margin-left: auto;
   }
 
-  .nav {
-    order: 3;
-    flex-basis: 100%;
-    margin-left: -8px;
-    gap: 2px;
-  }
+  .theme-toggle { order: 3; }
 
-  .nav-link {
-    height: 30px;
-    padding: 0 8px;
-    font-size: 13px;
-  }
+  /* The links live under the instructions at this width, so the bar has no
+     tab strip for the sliding highlight to mark. */
+  .nav { display: none; }
+  .nav-pill { display: none; }
 
-  .appbar-actions {
-    order: 4;
-    flex-basis: 100%;
-    margin-left: 0;
-    justify-content: flex-end;
-  }
+  .footer-nav { display: flex; }
 }
 
 @media screen and (max-width: 520px) {
   html, body { font-size: 15px; }
 
   body { padding: 0 20px 40px; }
+
+  /* The bar is page chrome, so it must reach both screen edges: cancel the
+     body gutter here and put it back as the bar's own horizontal padding. */
+  .appbar {
+    margin-left: -20px;
+    margin-right: -20px;
+  }
+
+  .appbar-inner { padding: 8px 20px; }
 
   .container { padding-top: 20px; }
 
