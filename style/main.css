@@ -297,6 +297,7 @@ hr {
   transition: transform var(--dur-normal) var(--ease-standard);
 }
 
+.skip-link:hover { color: var(--on-brand); }
 .skip-link:focus-visible { transform: none; }
 
 /* The game column: one board wide, centred under the app bar. */
@@ -385,12 +386,13 @@ hr {
   z-index: 1;
 }
 
+/* The wordmark, and nothing else: the site's brand slot without an avatar. */
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   flex: none;
-  padding: 4px 10px;
+  height: 34px;
+  padding: 0 10px;
   border-radius: var(--radius-control);
   color: var(--fg-1);
   text-decoration: none;
@@ -398,28 +400,12 @@ hr {
 
 .brand:hover { color: var(--fg-1); }
 
-/* A two-by-two board glyph, filled like the site's avatar square. */
-.brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: var(--brand-bg);
-  color: var(--on-brand);
-  box-shadow: var(--shadow-2);
-}
-
-.brand-mark svg { display: block; width: 20px; height: 20px; fill: currentColor; }
-
 .brand-name {
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1.2;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 /* The game page marks the brand as the current page, so the wordmark picks up
@@ -448,10 +434,12 @@ hr {
   transition: color var(--dur-fast) var(--ease-standard);
 }
 
-/* The moving highlight carries the background, so the label only changes
-   colour and the hover and current-page states look the same. */
-.nav-link:hover,
-.nav-link[aria-current="page"] { color: var(--brand); }
+/* Hover and current-page colours follow the site's nav: a hovered link steps
+   up to --fg-1, the current page keeps the brand colour. The sliding
+   highlight is what makes the hover obvious. */
+.nav-link:hover { color: var(--fg-1); }
+.nav-link[aria-current="page"],
+.nav-link[aria-current="page"]:hover { color: var(--brand); }
 
 .nav-link .icon-link {
   width: 14px;
@@ -874,8 +862,15 @@ hr {
     transform var(--dur-fast) var(--ease-standard);
 }
 
-.game-container .game-message a:hover { background: var(--brand-bg-hover); }
-.game-container .game-message a:active { background: var(--brand-bg-pressed); transform: translateY(1px); }
+.game-container .game-message a:hover {
+  background: var(--brand-bg-hover);
+  color: var(--on-brand);
+}
+.game-container .game-message a:active {
+  background: var(--brand-bg-pressed);
+  color: var(--on-brand);
+  transform: translateY(1px);
+}
 
 .game-container .game-message a.keep-playing-button { display: none; }
 
@@ -895,8 +890,14 @@ hr {
   color: var(--fg-1);
   box-shadow: inset 0 0 0 1px var(--stroke-2), var(--shadow-2);
 }
-.game-container .game-message.game-won .retry-button:hover { background: var(--bg-subtle); }
-.game-container .game-message.game-won .retry-button:active { background: var(--bg-subtle-hover); }
+.game-container .game-message.game-won .retry-button:hover {
+  background: var(--bg-subtle);
+  color: var(--fg-1);
+}
+.game-container .game-message.game-won .retry-button:active {
+  background: var(--bg-subtle-hover);
+  color: var(--fg-1);
+}
 
 .game-area { position: relative; }
 
@@ -975,8 +976,16 @@ hr {
     transform var(--dur-fast) var(--ease-standard);
 }
 
-.confirm-message a:hover { background: var(--bg-subtle); }
-.confirm-message a:active { background: var(--bg-subtle-hover); transform: translateY(1px); }
+/* Every interactive element names its own hover ink. The generic `a:hover`
+   below would otherwise win on specificity and repaint a button's label in
+   the link colour — on the primary fill that is the same blue as the
+   background, which is how the New Game label once disappeared. */
+.confirm-message a:hover { background: var(--bg-subtle); color: var(--fg-1); }
+.confirm-message a:active {
+  background: var(--bg-subtle-hover);
+  color: var(--fg-1);
+  transform: translateY(1px);
+}
 
 /* OK commits the destructive action, so it is the primary button; Cancel
    keeps the resting style above. */
@@ -989,10 +998,16 @@ hr {
 }
 
 .confirm-message .size-change-confirm-button:hover,
-.confirm-message .restart-confirm-button:hover { background: var(--brand-bg-hover); }
+.confirm-message .restart-confirm-button:hover {
+  background: var(--brand-bg-hover);
+  color: var(--on-brand);
+}
 
 .confirm-message .size-change-confirm-button:active,
-.confirm-message .restart-confirm-button:active { background: var(--brand-bg-pressed); }
+.confirm-message .restart-confirm-button:active {
+  background: var(--brand-bg-pressed);
+  color: var(--on-brand);
+}
 
 /* ------------------------------------------------------------------
    App bar actions
@@ -1022,8 +1037,15 @@ hr {
     transform var(--dur-fast) var(--ease-standard);
 }
 
-.restart-button:hover { background: var(--brand-bg-hover); }
-.restart-button:active { background: var(--brand-bg-pressed); transform: translateY(1px); }
+.restart-button:hover {
+  background: var(--brand-bg-hover);
+  color: var(--button-ink);
+}
+.restart-button:active {
+  background: var(--brand-bg-pressed);
+  color: var(--button-ink);
+  transform: translateY(1px);
+}
 
 /* Undo is the secondary action: a resting surface with a stroke. */
 .undo-button {
@@ -1033,8 +1055,8 @@ hr {
   box-shadow: inset 0 0 0 1px var(--stroke-2), var(--shadow-2);
 }
 
-.undo-button:hover { background: var(--bg-subtle); }
-.undo-button:active { background: var(--bg-subtle-hover); }
+.undo-button:hover { background: var(--bg-subtle); color: var(--fg-1); }
+.undo-button:active { background: var(--bg-subtle-hover); color: var(--fg-1); }
 
 /* The [R] / [U] hints, drawn as chips rather than as bracket text. */
 .key-hint {
@@ -1270,7 +1292,7 @@ hr {
 
   .page-title { font-size: 30px; }
 
-  .brand-name { font-size: 15px; }
+  .brand-name { font-size: 16px; }
 
   .theme-toggle { width: 36px; height: 36px; }
 
